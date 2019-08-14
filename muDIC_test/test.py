@@ -1,5 +1,7 @@
 import muDIC as dic
-path = r"C:/Users/James/OneDrive/Documents/GitHub/CITS3200_Group16/muDIC_test/example_images"
+import os
+cwd = os.getcwd()
+path = cwd + r"/example_images"
 image_stack = dic.image_stack_from_folder(path,file_type=".bmp")
 mesher = dic.Mesher()
 mesh = mesher.mesh(image_stack)
