@@ -16,7 +16,7 @@ The following function is the one using C_First_Order function for optimzation
 %}
 
 
-
+% Example Usage: DIC_NR_images("ref500.bmp", "def500.bmp", 7, [0 0])
 function [result] = DIC_NR_images(ref_img, def_img, subsetSize, ini_guess)
 % Variable ref_image takes B&W reference image
 % Variable def_image takes B&W deformed image
@@ -43,16 +43,27 @@ function [result] = DIC_NR_images(ref_img, def_img, subsetSize, ini_guess)
     global def_interp_x;
     global def_interp_y; 
     
+    % Make sure that the subset size specified is valid (not odd at this
+    % point)
+    if (mod(subsetSize, 2) == 0) 
+        error('Subset must be odd?');
+    end
     
-    % Obtain the size of the reference image
+    % Read in the images (default directory is current working directory)
     ref_img_read = imread(ref_img);
     def_img_read = imread(def_img);
+    
+    % Obtain the size of the reference image
     [Y_size, X_size] = size(ref_img_read);
     
+    % Convert image arrays into double arrays
     ref_image = double(ref_img_read);
     def_image = double(def_img_read);
+    
+    %Initalize variables
     subset_size = subsetSize;
     spline_order = 6;
+    
     % termination condition for newton-raphson iteration
     Max_num_iter = 40; % maximum number of iterations
     TOL(1) = 10^(-8);  % change in correlation coefficient
@@ -69,12 +80,7 @@ Xmax = round(X_size-((subset_size/2) +15));
 Ymax = round(Y_size-((subset_size/2) +15));
 Xp = Xmin;
 Yp = Ymin;
-%disp( Xmin);
-%disp( Ymin);
-%disp(Xmax);
-%disp(Ymax);
-%disp(X_size);
-%disp(Y_size);
+
 if ( (Xp < Xmin) || (Yp < Ymin) || (Xp > Xmax) ||  (Yp > Ymax) )
     error('Process terminated!!! First point of centre of subset is on the edge of the image. ');
 end
@@ -96,13 +102,9 @@ sum_diff_sq = zeros(numel(u_check), numel(v_check));
 % Check every value of u and v and see where the best match occurs
 for iter1 = 1:numel(u_check)
     for iter2 = 1:numel(v_check)
-        try
         subdef = def_image( (Yp-floor(subset_size/2)+v_check(iter2)):(Yp+floor(subset_size/2)+v_check(iter2)), ...
                             (Xp-floor(subset_size/2)+u_check(iter1)):(Xp+floor(subset_size/2)+u_check(iter1)) );
         sum_diff_sq(iter2,iter1) = sum(sum( (subref - subdef).^2));
-        catch
-            %Nothing
-        end
     end
 end
 [TMP1,OFFSET1] = min(min(sum_diff_sq,[],2));
@@ -224,4 +226,13 @@ for yy = Ymin:Ymax
     disp(yy);disp(xx);
     
 end
+
+ini_guess_formatted = '???';
+if (isa(ini_guess, 'integer'))
+    ini_guess_formatted = int2str(ini_guess);
+elseif (ismatrix(ini_guess))
+    ini_guess_formatted = mat2str(ini_guess);
+end
+filename = sprintf('DEFORMATION_PARAMETERS(%s, %s, %d, %s).csv', ref_img, def_img, subsetSize, ini_guess_formatted);
+writematrix(DEFORMATION_PARAMETERS, filename);
 result = DEFORMATION_PARAMETERS;
