@@ -2,7 +2,8 @@ import sys, os, unittest
 PARENT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../"
 sys.path.append(PARENT_DIR)
 
-from deformation_measurement import DeformationMeasurer 
+from deformation_measurement import DeformationMeasurer
+from test_generated import generate_images
 
 class TestCase(unittest.TestCase):
 	def setUp(self):
@@ -24,6 +25,10 @@ class TestCase(unittest.TestCase):
 		python_output = self.dm.C_First_Order([0, 0, 0])
 		self.assertEqual(python_output, matlab_output)
 
+	def test_generated_images(self):
+		ref_i, def_i = generate_images()
+		self.assertIsNotNone(ref_i)
+		self.assertIsNotNone(def_i)
 
 if __name__ == '__main__':
 	unittest.main()
