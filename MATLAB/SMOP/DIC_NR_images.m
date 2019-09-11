@@ -1,19 +1,3 @@
-%{
-This file is the ownership of 
-
-% Ghulam Mubashar Hassan 
-% University of Western Australia, Perth, Australia
-
-This file is provided to students for their MS research only. Under no
-circumstance it may be distributed without owner's permission.
-
-------------------------------------------------------------------------
-|   DIGITAL IMAGE CORRELATION: IMAGES TO BE CORRELATED    |
-------------------------------------------------------------------------
-
-The following function is the one using C_First_Order function for optimzation 
-
-%}
 
 
 % Example Usage: DIC_NR_images("ref500.bmp", "def500.bmp", 7, [0 0])
@@ -88,14 +72,12 @@ end
 
 % Automatic Initial Guess
 q_0 = zeros(6,1);
-disp(q_0)
 q_0(1:2,1) = ini_guess;
-disp(q_0)
 % The initial guess must lie between -range to range in pixels
 range = 15;%35;
 u_check = (round(q_0(1)) - range):(round(q_0(1)) + range);
 v_check = (round(q_0(2)) - range):(round(q_0(2)) + range);
-disp(q_0(1))
+
 % Define the intensities of the first reference subset
 subref = ref_image(Yp-floor(subset_size/2):Yp+floor(subset_size/2), ...
                    Xp-floor(subset_size/2):Xp+floor(subset_size/2));
@@ -136,8 +118,6 @@ X_defcoord = 1:X_size;
 Y_defcoord = 1:Y_size;
 
 % Fit the interpolating spline: g(x,y)
-%def_interp = csape({spline_order,spline_order},{Y_defcoord, X_defcoord});
-%Not currently implemented in octave
 def_interp = spapi( {spline_order,spline_order}, {Y_defcoord, X_defcoord}, def_image(Y_defcoord,X_defcoord) );
 
 % Find the partial derivitives of the spline: dg/dx and dg/dy
@@ -147,9 +127,7 @@ def_interp = spapi( {spline_order,spline_order}, {Y_defcoord, X_defcoord}, def_i
 % Convert all the splines from B-form into ppform to make it
 % computationally cheaper to evaluate. Also find partial derivatives of
 % spline w.r.t x and y
-
-%Not currently implemented in octave
-%def_interp = fn2fm(def_interp, 'pp');
+def_interp = fn2fm(def_interp, 'pp');
 def_interp_x = fnder(def_interp, [0,1]);
 def_interp_y = fnder(def_interp, [1,0]);
 %_________________________________________________________________________ 
