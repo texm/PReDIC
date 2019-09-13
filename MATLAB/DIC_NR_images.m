@@ -149,7 +149,7 @@ def_interp = spapi( {spline_order,spline_order}, {Y_defcoord, X_defcoord}, def_i
 % spline w.r.t x and y
 
 %Not currently implemented in octave
-%def_interp = fn2fm(def_interp, 'pp');
+def_interp = fn2fm(def_interp, 'pp');
 def_interp_x = fnder(def_interp, [0,1]);
 def_interp_y = fnder(def_interp, [1,0]);
 %_________________________________________________________________________ 
