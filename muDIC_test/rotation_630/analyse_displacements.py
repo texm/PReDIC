@@ -38,7 +38,7 @@ def analyse_displacements():
 
     mesher = dic.Mesher()
     #mesh = mesher.mesh(image_stack, Xc1=15.0, Xc2=485.0, Yc1=15.0, Yc2=485.0, n_elx=32, n_ely=32, GUI=False)
-    mesh = mesher.mesh(image_stack, Xc1=30.0, Xc2=600.0, Yc1=30.0, Yc2=600.0, n_elx=4, n_ely=4, GUI=False)
+    mesh = mesher.mesh(image_stack, Xc1=30.0, Xc2=600.0, Yc1=30.0, Yc2=600.0, n_elx=8, n_ely=8, GUI=False)
     #mesh = mesher.mesh(image_stack)
     #mesh = mesher.mesh(image_stack, Xc1=25.0, Xc2=35.0, Yc1=25.0, Yc2=35.0, n_elx=1, n_ely=1, GUI=False)
     inputs = dic.DICInput(mesh,image_stack)
