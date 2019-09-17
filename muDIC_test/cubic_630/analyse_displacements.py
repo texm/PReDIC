@@ -28,7 +28,7 @@ def find_file_names(path, type=".png"):
 
 def analyse_displacements():
     cwd = os.getcwd()
-    path = cwd + r"/section_630"
+    path = cwd
     image_stack = dic.image_stack_from_folder(path,file_type=".bmp")
     '''
     height, width, channels = 0,0,0
@@ -38,7 +38,7 @@ def analyse_displacements():
 
     mesher = dic.Mesher()
     #mesh = mesher.mesh(image_stack, Xc1=15.0, Xc2=485.0, Yc1=15.0, Yc2=485.0, n_elx=32, n_ely=32, GUI=False)
-    mesh = mesher.mesh(image_stack, Xc1=30.0, Xc2=600.0, Yc1=30.0, Yc2=600.0, n_elx=32, n_ely=32, GUI=False)
+    mesh = mesher.mesh(image_stack, Xc1=30.0, Xc2=600.0, Yc1=30.0, Yc2=600.0, n_elx=400, n_ely=400, GUI=False)
     #mesh = mesher.mesh(image_stack)
     #mesh = mesher.mesh(image_stack, Xc1=25.0, Xc2=35.0, Yc1=25.0, Yc2=35.0, n_elx=1, n_ely=1, GUI=False)
     inputs = dic.DICInput(mesh,image_stack)
@@ -52,4 +52,5 @@ def analyse_displacements():
     #print(displ.shape)
     viz = dic.Visualizer(fields,images=image_stack)
     viz.show(field="u", component = (1,1), frame = 1)
+
 analyse_displacements()

@@ -28,7 +28,7 @@ def find_file_names(path, type=".png"):
 
 def analyse_displacements():
     cwd = os.getcwd()
-    path = cwd + r"/section_630"
+    path = cwd
     image_stack = dic.image_stack_from_folder(path,file_type=".bmp")
     '''
     height, width, channels = 0,0,0
@@ -52,4 +52,5 @@ def analyse_displacements():
     #print(displ.shape)
     viz = dic.Visualizer(fields,images=image_stack)
     viz.show(field="u", component = (1,1), frame = 1)
+
 analyse_displacements()

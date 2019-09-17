@@ -26,7 +26,7 @@ def main():
     #print(speckle.min())
     #speckle *= 255
     #speckle = speckle.astype(np.uint8)
-
+    
     speckle_image *= 255
     speckle_image = speckle_image.astype(np.uint8)
     imageio.imwrite('ref250.bmp', speckle)
