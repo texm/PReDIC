@@ -1,0 +1,1 @@
+matlab -batch "DIC_NR_images('ref_630.bmp', 'def_630_y_stretched_5px_cubic.bmp', 29, [0 0], 0)" exit
