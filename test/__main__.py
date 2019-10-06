@@ -16,10 +16,10 @@ class TestCase(unittest.TestCase):
 
 	def test_DIC_NR_images(self):
 		matlab_output = [] # open csv file of matlab results
-		python_output = self.dm.DIC_NR_images("ref50.bmp", "def50.bmp", 3, [0, 0])
+		python_output = self.dm.DIC_NR_images("MATLAB/ref500.bmp", "MATLAB/def500.bmp", 7, [0, 0])
 		self.assertEqual(python_output, matlab_output)
 
-
+	# cant really test without ^ finished
 	def test_C_First_Order(self):
 		matlab_output = (0.0, 0.0, 0.0) # save matlab results as json or something?
 		python_output = matlab_output #self.dm.C_First_Order([0, 0, 0])
