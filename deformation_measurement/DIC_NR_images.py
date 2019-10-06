@@ -1,5 +1,7 @@
+import C_First_Order
 import math
 import numpy as np
+import pandas as pd
 from PIL import Image
 from scipy.interpolate import splrep, PPoly
 
@@ -119,4 +121,78 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
 
     #_________________________________________________________________________ 
     #t_interp = toc;    # Save the amount of time it took to interpolate
-    return []
+
+
+    # MAIN CORRELATION LOOP -- CORRELATE THE POINTS REQUESTED
+
+    # for i=1:length(pts(:,1))
+    for yy in range(Ymin,Ymax):
+        if yy > Ymin:
+            q_k[1:6] = DEFORMATION_PARAMETERS[yy-1,Xmin,1:6]
+        for xx in range(Xmin, Xmax):
+            #Points for correlation and initializaing the q matrix
+            Xp = xx
+            Yp = yy
+            #t_tmp = toc
+
+            # __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
+            # if (itr_skip == 0)
+            # Initialize some values
+            n = 0
+            C_last, GRAD_last, HESS = C_First_Order.C_First_Order(q_k, globals) # q_k was the result from last point or the user's guess
+            optim_completed = False
+
+            if np.isnan(abs(np.mean(np.mean(HESS)))):
+                print(yy)
+                print(xx)
+                optim_completed = True
+            while not optim_completed:
+                # Compute the next guess and update the values
+                delta_q = np.linalg.lstsq(HESS,(-GRAD_last)) # Find the difference between q_k+1 and q_k
+                q_k = q_k + delta_q                             #q_k+1 = q_k + delta_q
+                C, GRAD, HESS = C_First_Order.C_First_Order(q_k, globals) # Compute new values
+                
+                # Add one to the iteration counter
+                n = n + 1 # Keep track of the number of iterations
+
+                # Check to see if the values have converged according to the stopping criteria
+                if n > Max_num_iter or ( abs(C-C_last) < TOL[0] and all(abs(delta_q) < TOL[1])): #needs to be tested...
+                    optim_completed = True
+                
+                C_last = C #Save the C value for comparison in the next iteration
+                GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
+            #_________________________________________________________________________
+            #t_optim = toc - t_tmp
+
+            #_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
+            # Store the current displacements
+            DEFORMATION_PARAMETERS[yy,xx,0] = q_k[0] # displacement x
+            DEFORMATION_PARAMETERS[yy,xx,1] = q_k[1] # displacement y
+            DEFORMATION_PARAMETERS[yy,xx,2] = q_k[2] 
+            DEFORMATION_PARAMETERS[yy,xx,3] = q_k[3] 
+            DEFORMATION_PARAMETERS[yy,xx,4] = q_k[4] 
+            DEFORMATION_PARAMETERS[yy,xx,5] = q_k[5] 
+            DEFORMATION_PARAMETERS[yy,xx,6] = 1-C # correlation co-efficient final value
+            # store points which are correlated in reference image i.e. center of subset
+            DEFORMATION_PARAMETERS[yy,xx,7] = Xp 
+            DEFORMATION_PARAMETERS[yy,xx,8] = Yp
+
+            DEFORMATION_PARAMETERS[yy,xx,9] = n # number of iterations
+            #DEFORMATION_PARAMETERS[yy,xx,11] = t_tmp # time of spline process
+            #DEFORMATION_PARAMETERS[yy,xx,12] = t_optim # time of optimization process
+
+        print(yy)
+        print(xx)
+    
+    filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, subsetSize)
+    with open(filename, 'w') as outfile:
+        for slice_2d in DEFORMATION_PARAMETERS:
+            np.savetxt(outfile, slice_2d)
+    outfile.close()
+    return
+
+    
+
+
+
+DIC_NR_images("ref50.bmp", "def50.bmp", 7, [0, 0])
