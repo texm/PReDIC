@@ -22,14 +22,6 @@ def C_First_Order(q, G, nargout=2):
 	def_interp_x = G.def_interp_x
 	def_interp_y = G.def_interp_y
 
-	#global subset_size;
-	#global ref_image;
-	#global Xp;
-	#global Yp;
-	#global def_interp;
-	#global def_interp_x;
-	#global def_interp_y;  
-
 	i = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
 	j = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
 
@@ -122,53 +114,5 @@ def C_First_Order(q, G, nargout=2):
 				[d2C_dudvdx, d2C_dvdvdx, d2C_dudxdvdx, d2C_dvdydvdx, d2C_dudydvdx, d2C_dvdx2] \
 			])
 		HESS = np.multiply(2/SS_f_sq, marr)
-	'''	 
-	%--------------------------------------------------------------------------
-
-	if nargout > 2
-	%-HESSIAN OF "C"-----------------------------------------------------------   
-
-		% Write out each value in the Hessian Matrix (remember, it's symmetric,
-		% so only half of the entries are need), using Knauss' approximation
-		d2C_du2 = sum(sum( (dg_du).*(dg_du) ));               
-		d2C_dv2 = sum(sum( (dg_dv).*(dg_dv) ));
-		d2C_dudx2 = sum(sum( (dg_dudx).*(dg_dudx) ));
-		d2C_dvdy2 = sum(sum( (dg_dvdy).*(dg_dvdy) ));
-		d2C_dudy2 = sum(sum( (dg_dudy).*(dg_dudy) ));
-		d2C_dvdx2 = sum(sum( (dg_dvdx).*(dg_dvdx) ));
-		
-		d2C_dudv = sum(sum( (dg_du).*(dg_dv) ));
-		d2C_dududx = sum(sum( (dg_du).*(dg_dudx) ));
-		d2C_dudvdy = sum(sum( (dg_du).*(dg_dvdy) ));
-		d2C_dududy = sum(sum( (dg_du).*(dg_dudy) ));
-		d2C_dudvdx = sum(sum( (dg_du).*(dg_dvdx) ));
-		
-		d2C_dvdudx = sum(sum( (dg_dv).*(dg_dudx) ));
-		d2C_dvdvdy = sum(sum( (dg_dv).*(dg_dvdy) ));
-		d2C_dvdudy = sum(sum( (dg_dv).*(dg_dudy) ));
-		d2C_dvdvdx = sum(sum( (dg_dv).*(dg_dvdx) ));
-		
-		d2C_dudxdvdy = sum(sum( (dg_dudx).*(dg_dvdy) ));
-		d2C_dudxdudy = sum(sum( (dg_dudx).*(dg_dudy) ));
-		d2C_dudxdvdx = sum(sum( (dg_dudx).*(dg_dvdx) ));
-		
-		d2C_dvdydudy = sum(sum( (dg_dvdy).*(dg_dudy) ));
-		d2C_dvdydvdx = sum(sum( (dg_dvdy).*(dg_dvdx) ));
-		
-		d2C_dudydvdx = sum(sum( (dg_dudy).*(dg_dvdx) ));
-				 
-				 
-		HESS = (2/SS_f_sq).* [  d2C_du2,    d2C_dudv,   d2C_dududx,   d2C_dudvdy,   d2C_dududy,   d2C_dudvdx   ; ...
-								d2C_dudv,   d2C_dv2,    d2C_dvdudx,   d2C_dvdvdy,   d2C_dvdudy,   d2C_dvdvdx   ; ...
-								d2C_dududx, d2C_dvdudx, d2C_dudx2,    d2C_dudxdvdy, d2C_dudxdudy, d2C_dudxdvdx ; ...
-								d2C_dudvdy, d2C_dvdvdy, d2C_dudxdvdy, d2C_dvdy2,    d2C_dvdydudy, d2C_dvdydvdx ; ...
-								d2C_dududy, d2C_dvdudy, d2C_dudxdudy, d2C_dvdydudy, d2C_dudy2,    d2C_dudydvdx ; ...
-								d2C_dudvdx, d2C_dvdvdx, d2C_dudxdvdx, d2C_dvdydvdx, d2C_dudydvdx, d2C_dvdx2   ];
-	%--------------------------------------------------------------------------
-	end % if nargout > 2
-	end % if nargout > 1
-
-	end % function
-	'''
 
 	return C, GRAD, HESS
