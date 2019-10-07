@@ -1,8 +1,8 @@
-import math
+from math import floor
 import numpy as np
 import scipy as sp
 
-def C_First_Order(q, G, nargout=2):
+def C_First_Order(q, _G, nargout=2):
 	C = 0.0
 	GRAD = 0.0
 	HESS = 0.0
@@ -14,29 +14,30 @@ def C_First_Order(q, G, nargout=2):
 	du_dy       = q[4]
 	dv_dx       = q[5]
 
-	subset_size = G.subset_size
-	ref_image = G.ref_image
-	Xp = G.Xp
-	Yp = G.Yp
-	def_interp = G.def_interp
-	def_interp_x = G.def_interp_x
-	def_interp_y = G.def_interp_y
+	subset_size = _G["subset_size"]
+	ref_image = _G["ref_image"]
+	Xp = _G["Xp"]
+	Yp = _G["Yp"]
+	def_interp = _G["def_interp"]
+	def_interp_x = _G["def_interp_x"]
+	def_interp_y = _G["def_interp_y"]
 
-	i = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
-	j = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
+	i = np.arange(-floor(subset_size/2), floor(subset_size/2) + 1)
+	j = np.arange(-floor(subset_size/2), floor(subset_size/2) + 1)
 
 	I_matrix, J_matrix = np.meshgrid(i, j)
 
 	N = np.multiply(subset_size, subset_size)
 
-	I = np.reshape(I_matrix, 1, N)
-	J = np.reshape(J_matrix, 1, N)
+	I = np.reshape(I_matrix, (1, N))
+	J = np.reshape(J_matrix, (1, N))
 
 	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
 	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
 
-	f = np.reshape(ref_image[Yp + j, Xp + i], 1, N)
-	g = def_interp([[Y], [X]])
+	# TODO: why is ref_image[Yp +j, Xp + i] not len 50? (size 14)
+	f = np.reshape(ref_image[Yp + j, Xp + i], (1, N))
+	g = def_interp(Y, X)
 
 	SS_f_g = np.sum(np.sum(np.power((f-g), 2)))
 	SS_f_sq = np.sum(np.sum(np.power(f, 2)))
@@ -44,8 +45,8 @@ def C_First_Order(q, G, nargout=2):
 	C = np.divide(SS_f_g, SS_f_sq)
 
 	if nargout > 1:
-		dg_dX = def_interp_x([[Y], [X]])
-		dg_dY = def_interp_x([[Y], [X]])
+		dg_dX = def_interp_x(Y, X)
+		dg_dY = def_interp_x(Y, X)
 
 		dX_du = 1
 		dX_dv = 0
