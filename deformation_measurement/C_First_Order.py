@@ -3,7 +3,18 @@ import numpy as np
 import scipy as sp
 import Globs
 
-def C_First_Order(q, nargout=2):
+def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
+	N = subset_size * subset_size
+	t = def_interp.ev(X,Y,dx=xd, dy=yd)
+	g = np.zeros_like(t)
+	tmp = 0
+	for first_index in range(1,subset_size+1):
+		for second_index in range(1,subset_size+1):
+			g[0,tmp] = t[0,((second_index - 1)*7+first_index)-1]
+			tmp+=1
+	return g
+
+def C_First_Order(q, nargout=3):
 	C = 0.0
 	GRAD = 0.0
 	HESS = 0.0
@@ -37,18 +48,27 @@ def C_First_Order(q, nargout=2):
 	#tmp = ref_image[(Yp + J_matrix), (Xp + I_matrix),0]
 	
 	f = np.reshape(ref_image[(Yp + J_matrix), (Xp + I_matrix),0], (1, N), 'F')
-	print(f)
 	#np.vstack((Y,X))
-	g = def_interp.ev(X,Y)
-	print(g)
-	SS_f_g = np.sum(np.sum(np.power((f-g), 2)))
-	SS_f_sq = np.sum(np.sum(np.power(f, 2)))
+	t = def_interp.ev(X,Y)
+	g = np.zeros_like(t)
+	tmp = 0
+	for first_index in range(1,subset_size+1):
+		for second_index in range(1,subset_size+1):
+			g[0,tmp] = t[0,((second_index - 1)*7+first_index)-1]
+			tmp+=1
+	#print(f)
+	#print(g)
+	temp = (f-g)
+	#print(temp)
+
+	SS_f_g = np.sum(np.sum(np.square((f-g))))
+	SS_f_sq = np.sum(np.sum(np.square(f)))
 
 	C = np.divide(SS_f_g, SS_f_sq)
 
 	if nargout > 1:
-		dg_dX = def_interp_x([[Y], [X]])
-		dg_dY = def_interp_x([[Y], [X]])
+		dg_dX = ev_concatenate(def_interp, X,Y,subset_size,0,1)
+		dg_dY = ev_concatenate(def_interp, X,Y,subset_size,1,0)
 
 		dX_du = 1
 		dX_dv = 0
@@ -69,9 +89,9 @@ def C_First_Order(q, nargout=2):
 		dg_dudx = np.multiply(dg_dX, dX_dudx) + np.multiply(dg_dY, dY_dudx)
 		dg_dvdy = np.multiply(dg_dX, dX_dvdy) + np.multiply(dg_dY, dY_dvdy)
 		dg_dudy = np.multiply(dg_dX, dX_dudy) + np.multiply(dg_dY, dY_dudy)
-		dg_dvdx = np.multiply(dg_dX, dX_dxdx) + np.multiply(dg_dY, dY_dvdx)
+		dg_dvdx = np.multiply(dg_dX, dX_dvdx) + np.multiply(dg_dY, dY_dvdx)
 
-		dC_du = np.sum(np.sum(np.multiply(g-f, dg_du)))
+		dC_du = np.sum(np.sum(np.multiply((g-f), dg_du)))
 		dC_dv = np.sum(np.sum(np.multiply(g-f, dg_dv)))
 		dC_dudx = np.sum(np.sum(np.multiply(g-f, dg_dudx)))
 		dC_dvdy = np.sum(np.sum(np.multiply(g-f, dg_dvdy)))
@@ -116,6 +136,6 @@ def C_First_Order(q, nargout=2):
 				[d2C_dududy, d2C_dvdudy, d2C_dudxdudy, d2C_dvdydudy, d2C_dudy2,    d2C_dudydvdx],
 				[d2C_dudvdx, d2C_dvdvdx, d2C_dudxdvdx, d2C_dvdydvdx, d2C_dudydvdx, d2C_dvdx2]
 			])
-		HESS = np.multiply(2/SS_f_sq, marr)
+		HESS = np.multiply((2/SS_f_sq), marr)
 
 	return C, GRAD, HESS

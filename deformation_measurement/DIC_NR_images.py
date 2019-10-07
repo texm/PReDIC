@@ -4,8 +4,20 @@ import math
 import numpy as np
 import pandas as pd
 from PIL import Image
-from scipy.interpolate import splrep, PPoly, RectBivariateSpline
+from scipy.interpolate import splrep, PPoly, RectBivariateSpline, BSpline, BPoly, bisplev, bisplrep, splder
 
+def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
+    with open(fname, 'w') as fh:
+        for row in x:
+            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+            fh.write(line + '\n')
+
+def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
+
+    with open(fname, 'w') as fh:
+        for row in x:
+            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+            fh.write(line + '\n')
 
 
 def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args,**kwargs):
@@ -73,7 +85,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
         for iter2 in range(v_check.size):
             subdef = Globs.def_image[(Globs.Yp-math.floor(subset_size/2)+v_check[iter2]):(Globs.Yp+math.floor(subset_size/2)+v_check[iter2])+1, (Globs.Xp-math.floor(subset_size/2)+u_check[iter1]):(Globs.Xp+math.floor(subset_size/2)+u_check[iter1])+1,0]
 
-            sum_diff_sq[iter2,iter1] = sum(sum(np.square(subref-subdef)))
+            sum_diff_sq[iter2,iter1] = np.sum(np.sum(np.square(subref-subdef)))
     #print(subdef)
     OFFSET1 = np.argmin(np.min(sum_diff_sq, axis=1)) # These offsets are +1 in MATLAB
     OFFSET2 = np.argmin(np.min(sum_diff_sq, axis=0))
@@ -112,12 +124,30 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
 
     #spline = splrep(X_defcoord, Y_defcoord)
     #Globs.def_interp = PPoly.from_spline(spline)
-    Globs.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=5, ky=5)
-    
+    Globs.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=spline_order-1, ky=spline_order-1)
 
-    Globs.def_interp_x = Globs.def_interp.ev(0,1)
-    Globs.def_interp_y = Globs.def_interp.ev(1,0)
 
+    #Globs.def_interp_x = Globs.def_interp.ev(0,1)
+    #Globs.def_interp_y = Globs.def_interp.ev(1,0)
+    '''
+    Globs.def_interp_x = Globs.def_interp(X_defcoord, Y_defcoord, 0, 1)
+    Globs.def_interp_x = BPoly.from_derivatives(xi=X_defcoord,yi=Globs.def_interp_x)
+
+    Globs.def_interp_y = Globs.def_interp(X_defcoord, Y_defcoord, 1, 0)
+    Globs.def_interp_y = BPoly.from_derivatives(xi=Y_defcoord,yi=Globs.def_interp_y)
+    #Globs.def_interp_y = BSpline.derivative(Globs.def_interp,[1,0])
+    '''
+    '''
+    test = splder(Globs.def_interp.tcl,1)
+    Globs.def_interp_x = bisplev(X_defcoord, Y_defcoord, Globs.def_interp.tck+(5,)+(5,), 0, 1)
+    Globs.def_interp_y = bisplev(X_defcoord, Y_defcoord, Globs.def_interp.tck+(5,)+(5,), 1, 0)
+    '''
+    '''
+    Globs.def_interp_x = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=5, ky=4)
+    Globs.def_interp_y = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=4, ky=5)
+    '''
+    Globs.def_interp_x = Globs.def_interp(X_defcoord, Y_defcoord, 0, 1)
+    Globs.def_interp_y = Globs.def_interp(X_defcoord, Y_defcoord, 1, 0)
     #_________________________________________________________________________ 
     #t_interp = toc;    # Save the amount of time it took to interpolate
 
@@ -148,14 +178,14 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
             while not optim_completed:
                 # Compute the next guess and update the values
                 delta_q = np.linalg.lstsq(HESS,(-GRAD_last)) # Find the difference between q_k+1 and q_k
-                q_k = q_k + delta_q                             #q_k+1 = q_k + delta_q
-                C, GRAD, HESS = C_First_Order.C_First_Order(q_k, globals) # Compute new values
+                q_k = q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
+                C, GRAD, HESS = C_First_Order.C_First_Order(q_k) # Compute new values
                 
                 # Add one to the iteration counter
                 n = n + 1 # Keep track of the number of iterations
 
                 # Check to see if the values have converged according to the stopping criteria
-                if n > Max_num_iter or ( abs(C-C_last) < TOL[0] and all(abs(delta_q) < TOL[1])): #needs to be tested...
+                if n > Max_num_iter or ( abs(C-C_last) < TOL[0] and all(abs(delta_q[0]) < TOL[1])): #needs to be tested...
                     optim_completed = True
                 
                 C_last = C #Save the C value for comparison in the next iteration
@@ -177,18 +207,28 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
             DEFORMATION_PARAMETERS[yy,xx,8] = Globs.Yp
 
             DEFORMATION_PARAMETERS[yy,xx,9] = n # number of iterations
-            #DEFORMATION_PARAMETERS[yy,xx,11] = t_tmp # time of spline process
-            #DEFORMATION_PARAMETERS[yy,xx,12] = t_optim # time of optimization process
+            DEFORMATION_PARAMETERS[yy,xx,10] = 0 #t_tmp # time of spline process
+            DEFORMATION_PARAMETERS[yy,xx,11] = 0 #t_optim # time of optimization process
 
         print(yy)
         print(xx)
     
     filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, Globs.subset_size)
-    with open(filename, 'w') as outfile:
-        for slice_2d in DEFORMATION_PARAMETERS:
-            np.savetxt(outfile, slice_2d)
-    outfile.close()
+    '''
+    for slice_2d in DEFORMATION_PARAMETERS:
+        savetxt_compact(filename, slice_2d)
     return
+    '''
+    xxx,yyy,zzz = DEFORMATION_PARAMETERS.shape
+    '''
+    
+    for d1 in range(0:xxx):
+        for d2 in range(0:yyy):
+    '''
+    
+    sav = np.swapaxes(DEFORMATION_PARAMETERS,2,1).reshape((xxx,yyy*zzz), order='A')
+    savetxt_compact('_compact_' + filename, sav)
+    #savetxt_compact('_compact_two_' + filename, DEFORMATION_PARAMETERS)
 
     
 
