@@ -138,8 +138,6 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
             # if (itr_skip == 0)
             # Initialize some values
             n = 0
-            for glob in globals():
-		            print(glob)
             C_last, GRAD_last, HESS = C_First_Order.C_First_Order(q_k) # q_k was the result from last point or the user's guess
             optim_completed = False
 

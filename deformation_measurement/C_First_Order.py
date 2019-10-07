@@ -22,22 +22,25 @@ def C_First_Order(q, nargout=2):
 	def_interp_x = Globs.def_interp_x
 	def_interp_y = Globs.def_interp_y
 
-	i = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2))
-	j = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2))
+	i = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2)+1)
+	j = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2)+1)
 
 	I_matrix, J_matrix = np.meshgrid(i, j)
 
-	N = np.multiply(subset_size, subset_size)
-
-	I = np.reshape(I_matrix, 1, N)
-	J = np.reshape(J_matrix, 1, N)
+	N = subset_size * subset_size
+	I = np.reshape(I_matrix, (1, N), 'F')
+	J = np.reshape(J_matrix, (1, N), 'F')
 
 	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
 	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
 
-	f = np.reshape(ref_image[Yp + j, Xp + i], 1, N)
-	g = def_interp([[Y], [X]])
-
+	#tmp = ref_image[(Yp + J_matrix), (Xp + I_matrix),0]
+	
+	f = np.reshape(ref_image[(Yp + J_matrix), (Xp + I_matrix),0], (1, N), 'F')
+	print(f)
+	#np.vstack((Y,X))
+	g = def_interp.ev(X,Y)
+	print(g)
 	SS_f_g = np.sum(np.sum(np.power((f-g), 2)))
 	SS_f_sq = np.sum(np.sum(np.power(f, 2)))
 
