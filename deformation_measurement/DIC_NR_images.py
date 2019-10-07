@@ -1,37 +1,34 @@
 import C_First_Order
+import Globs import subsetSize, ref_image, Xp, Yp, def_interp, def_interp_x, def_interp_y
 import math
 import numpy as np
 import pandas as pd
 from PIL import Image
-from scipy.interpolate import splrep, PPoly
+from scipy.interpolate import splrep, PPoly, RectBivariateSpline
 
-global subset_size
-global ref_image
-global Xp
-global Yp
-global def_interp
-global def_interp_x
-global def_interp_y
+
 
 def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args,**kwargs):
     
+    Globs.subsetSize = subsetSize
+
     # Make sure that the subset size specified is valid (not odd at this point)
-    if (subsetSize % 2 == 0):
+    if (Globs.subsetSize % 2 == 0):
         raise ValueError("Subset size must be odd")
 
     # Prepare for trouble (load images) (default directory is current working directory) https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
-    ref_image = np.array(Image.open(ref_img).convert('LA')) # numpy.array
-    def_image = np.array(Image.open(def_img).convert('LA')) # numpy.array
+    Globs.ref_image = np.array(Image.open(ref_img).convert('LA')) # numpy.array
+    Globs.def_image = np.array(Image.open(def_img).convert('LA')) # numpy.array
 
     # Make it double
-    ref_image = ref_image.astype('d') # convert to double
-    def_image = def_image.astype('d') # convert to double
+    Globs.ref_image = Globs.ref_image.astype('d') # convert to double
+    Globs.def_image = Globs.def_image.astype('d') # convert to double
 
     # Obtain the size of the reference image
-    X_size, Y_size, _tmp= ref_image.shape
+    X_size, Y_size, _tmp= Globs.ref_image.shape
 
     # Initialize variables
-    subset_size = subsetSize
+    subset_size = Globs.subsetSize
     spline_order = 6
 
     # Termination condition for newton-raphson iteration
@@ -50,11 +47,11 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
 
     Xmax = round(X_size-((subset_size/2) +15))
     Ymax = round(Y_size-((subset_size/2) +15))
-    Xp = Xmin
-    Yp = Ymin
+    Globs.Xp = Xmin
+    Globs.Yp = Ymin
 
-    if ( (Xp < Xmin) or (Yp < Ymin) or (Xp > Xmax) or  (Yp > Ymax) ):
-        raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ');
+    if ( (Globs.Xp < Xmin) or (Globs.Yp < Ymin) or (Globs.Xp > Xmax) or  (Globs.Yp > Ymax) ):
+        raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ')
     
     #_____________Automatic Initial Guess_____________
 
@@ -66,7 +63,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     v_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_)+1, dtype=int)
 
     # Define the intensities of the first reference subset
-    subref = ref_image[Yp-math.floor(subset_size/2):(Yp+math.floor(subset_size/2))+1, Xp-math.floor(subset_size/2):Xp+math.floor(subset_size/2)+1,0]
+    subref = Globs.ref_image[Globs.Yp-math.floor(subset_size/2):(Globs.Yp+math.floor(subset_size/2))+1, Globs.Xp-math.floor(subset_size/2):Globs.Xp+math.floor(subset_size/2)+1,0]
     #print(subref)
     
     # Preallocate some matrix space
@@ -74,7 +71,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     # Check every value of u and v and see where the best match occurs
     for iter1 in range(u_check.size):
         for iter2 in range(v_check.size):
-            subdef = def_image[(Yp-math.floor(subset_size/2)+v_check[iter2]):(Yp+math.floor(subset_size/2)+v_check[iter2])+1, (Xp-math.floor(subset_size/2)+u_check[iter1]):(Xp+math.floor(subset_size/2)+u_check[iter1])+1,0]
+            subdef = Globs.def_image[(Globs.Yp-math.floor(subset_size/2)+v_check[iter2]):(Globs.Yp+math.floor(subset_size/2)+v_check[iter2])+1, (Globs.Xp-math.floor(subset_size/2)+u_check[iter1]):(Globs.Xp+math.floor(subset_size/2)+u_check[iter1])+1,0]
 
             sum_diff_sq[iter2,iter1] = sum(sum(np.square(subref-subdef)))
     #print(subdef)
@@ -98,7 +95,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     DEFORMATION_PARAMETERS = np.zeros_like([], shape=(Y_size,X_size,12))
 
     # Set the initial guess to be the "last iteration's" solution.
-    q_k = q_0[1:6]
+    q_k = q_0[0:6]
 
     #_______________COMPUTATIONS________________
 
@@ -107,17 +104,19 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
 
     #__________FIT SPLINE ONTO DEFORMED SUBSET________________________
     # Obtain the size of the reference image
-    Y_size, X_size,tmp = ref_image.shape
+    Y_size, X_size,tmp = Globs.ref_image.shape
     
     # Define the deformed image's coordinates
     X_defcoord = np.arange(0, X_size, dtype=int) # Maybe zero?
     Y_defcoord = np.arange(0, Y_size, dtype=int)
 
-    spline = splrep(X_defcoord, Y_defcoord)
-    def_interp = PPoly.from_spline(spline)
+    #spline = splrep(X_defcoord, Y_defcoord)
+    #Globs.def_interp = PPoly.from_spline(spline)
+    Globs.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=5, ky=5)
+    
 
-    def_interp_x = def_interp([0, 1])
-    def_interp_y = def_interp([1, 0])
+    Globs.def_interp_x = Globs.def_interp.ev(0,1)
+    Globs.def_interp_y = Globs.def_interp.ev(1,0)
 
     #_________________________________________________________________________ 
     #t_interp = toc;    # Save the amount of time it took to interpolate
@@ -128,18 +127,20 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     # for i=1:length(pts(:,1))
     for yy in range(Ymin,Ymax):
         if yy > Ymin:
-            q_k[1:6] = DEFORMATION_PARAMETERS[yy-1,Xmin,1:6]
+            q_k[0:6] = DEFORMATION_PARAMETERS[yy-1,Xmin,0:6]
         for xx in range(Xmin, Xmax):
             #Points for correlation and initializaing the q matrix
-            Xp = xx
-            Yp = yy
+            Globs.Xp = xx
+            Globs.Yp = yy
             #t_tmp = toc
 
             # __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
             # if (itr_skip == 0)
             # Initialize some values
             n = 0
-            C_last, GRAD_last, HESS = C_First_Order.C_First_Order(q_k, globals) # q_k was the result from last point or the user's guess
+            for glob in globals():
+		            print(glob)
+            C_last, GRAD_last, HESS = C_First_Order.C_First_Order(q_k) # q_k was the result from last point or the user's guess
             optim_completed = False
 
             if np.isnan(abs(np.mean(np.mean(HESS)))):
@@ -174,8 +175,8 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
             DEFORMATION_PARAMETERS[yy,xx,5] = q_k[5] 
             DEFORMATION_PARAMETERS[yy,xx,6] = 1-C # correlation co-efficient final value
             # store points which are correlated in reference image i.e. center of subset
-            DEFORMATION_PARAMETERS[yy,xx,7] = Xp 
-            DEFORMATION_PARAMETERS[yy,xx,8] = Yp
+            DEFORMATION_PARAMETERS[yy,xx,7] = Globs.Xp 
+            DEFORMATION_PARAMETERS[yy,xx,8] = Globs.Yp
 
             DEFORMATION_PARAMETERS[yy,xx,9] = n # number of iterations
             #DEFORMATION_PARAMETERS[yy,xx,11] = t_tmp # time of spline process
@@ -184,7 +185,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
         print(yy)
         print(xx)
     
-    filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, subsetSize)
+    filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, Globs.subsetSize)
     with open(filename, 'w') as outfile:
         for slice_2d in DEFORMATION_PARAMETERS:
             np.savetxt(outfile, slice_2d)

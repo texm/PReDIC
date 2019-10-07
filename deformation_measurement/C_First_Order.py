@@ -1,8 +1,9 @@
 import math
 import numpy as np
 import scipy as sp
+import Globs import subsetSize, ref_image, Xp, Yp, def_interp, def_interp_x, def_interp_y
 
-def C_First_Order(q, G, nargout=2):
+def C_First_Order(q, nargout=2):
 	C = 0.0
 	GRAD = 0.0
 	HESS = 0.0
@@ -13,14 +14,13 @@ def C_First_Order(q, G, nargout=2):
 	dv_dy       = q[3]
 	du_dy       = q[4]
 	dv_dx       = q[5]
-
-	subset_size = G.subset_size
-	ref_image = G.ref_image
-	Xp = G.Xp
-	Yp = G.Yp
-	def_interp = G.def_interp
-	def_interp_x = G.def_interp_x
-	def_interp_y = G.def_interp_y
+	subset_size = Globs.subset_size
+	ref_image = Globs.ref_image
+	Xp = Globs.Xp
+	Yp = Globs.Yp
+	def_interp = Globs.def_interp
+	def_interp_x = Globs.def_interp_x
+	def_interp_y = Globs.def_interp_y
 
 	i = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
 	j = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
