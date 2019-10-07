@@ -1,5 +1,5 @@
 import C_First_Order
-import Globs import subsetSize, ref_image, Xp, Yp, def_interp, def_interp_x, def_interp_y
+import Globs
 import math
 import numpy as np
 import pandas as pd
@@ -10,10 +10,10 @@ from scipy.interpolate import splrep, PPoly, RectBivariateSpline
 
 def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args,**kwargs):
     
-    Globs.subsetSize = subsetSize
+    Globs.subset_size = subsetSize
 
     # Make sure that the subset size specified is valid (not odd at this point)
-    if (Globs.subsetSize % 2 == 0):
+    if (Globs.subset_size % 2 == 0):
         raise ValueError("Subset size must be odd")
 
     # Prepare for trouble (load images) (default directory is current working directory) https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
@@ -28,7 +28,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     X_size, Y_size, _tmp= Globs.ref_image.shape
 
     # Initialize variables
-    subset_size = Globs.subsetSize
+    subset_size = Globs.subset_size
     spline_order = 6
 
     # Termination condition for newton-raphson iteration
@@ -185,7 +185,7 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
         print(yy)
         print(xx)
     
-    filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, Globs.subsetSize)
+    filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, Globs.subset_size)
     with open(filename, 'w') as outfile:
         for slice_2d in DEFORMATION_PARAMETERS:
             np.savetxt(outfile, slice_2d)

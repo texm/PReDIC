@@ -1,7 +1,7 @@
-global subset_size
-global ref_image
-global Xp
-global Yp
-global def_interp
-global def_interp_x
-global def_interp_y
+subset_size = 0
+ref_image = None
+Xp = 0
+Yp = 0
+def_interp = None
+def_interp_x = None
+def_interp_y = None

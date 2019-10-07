@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import scipy as sp
-import Globs import subsetSize, ref_image, Xp, Yp, def_interp, def_interp_x, def_interp_y
+import Globs
 
 def C_First_Order(q, nargout=2):
 	C = 0.0
@@ -22,8 +22,8 @@ def C_First_Order(q, nargout=2):
 	def_interp_x = Globs.def_interp_x
 	def_interp_y = Globs.def_interp_y
 
-	i = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
-	j = np.arange(-math.floor(subset_size/2), floor(subset_size/2))
+	i = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2))
+	j = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2))
 
 	I_matrix, J_matrix = np.meshgrid(i, j)
 
