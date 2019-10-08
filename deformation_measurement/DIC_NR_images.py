@@ -1,24 +1,12 @@
-import C_First_Order
+#from deformation_measurement.C_First_Order import C_First_Order
+from C_First_Order import C_First_Order
+#import deformation_measurement.Globs as Globs
 import Globs
-import math
+
+from math import floor
 import numpy as np
-import pandas as pd
 from PIL import Image
 from scipy.interpolate import splrep, PPoly, RectBivariateSpline, BSpline, BPoly, bisplev, bisplrep, splder
-
-def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
-    with open(fname, 'w') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')
-
-def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
-
-    with open(fname, 'w') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')
-
 
 def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args,**kwargs):
     
@@ -54,11 +42,11 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     must away from edge greater than half of subset adding 15 to it to have
     range of initial guess accuracy.
     '''
-    Xmin = round((subset_size/2) +15) # Might need to make it 14 cuz of arrays starting at 0
+    Xmin = round((subset_size/2) + 15) # Might need to make it 14 cuz of arrays starting at 0
     Ymin = Xmin
 
-    Xmax = round(X_size-((subset_size/2) +15))
-    Ymax = round(Y_size-((subset_size/2) +15))
+    Xmax = round(X_size-((subset_size/2) + 15))
+    Ymax = round(Y_size-((subset_size/2) + 15))
     Globs.Xp = Xmin
     Globs.Yp = Ymin
 
@@ -70,29 +58,29 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     # Automatic Initial Guess
     q_0 = np.zeros_like([], shape=(6))
     q_0[0:2] = ini_guess
+
     range_ = 15 # Minus 1 for array starting at zero?
-    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_)+1, dtype=int)
-    v_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_)+1, dtype=int)
+    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
+    v_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
 
     # Define the intensities of the first reference subset
-    subref = Globs.ref_image[Globs.Yp-math.floor(subset_size/2):(Globs.Yp+math.floor(subset_size/2))+1, Globs.Xp-math.floor(subset_size/2):Globs.Xp+math.floor(subset_size/2)+1,0]
-    #print(subref)
+    subref = Globs.ref_image[Globs.Yp-floor(subset_size/2):(Globs.Yp+floor(subset_size/2))+1, Globs.Xp-floor(subset_size/2):Globs.Xp+floor(subset_size/2)+1,0]
     
     # Preallocate some matrix space
     sum_diff_sq = np.zeros((u_check.size, v_check.size))
     # Check every value of u and v and see where the best match occurs
     for iter1 in range(u_check.size):
         for iter2 in range(v_check.size):
-            subdef = Globs.def_image[(Globs.Yp-math.floor(subset_size/2)+v_check[iter2]):(Globs.Yp+math.floor(subset_size/2)+v_check[iter2])+1, (Globs.Xp-math.floor(subset_size/2)+u_check[iter1]):(Globs.Xp+math.floor(subset_size/2)+u_check[iter1])+1,0]
+            subdef = Globs.def_image[(Globs.Yp-floor(subset_size/2)+v_check[iter2]):(Globs.Yp+floor(subset_size/2)+v_check[iter2])+1, (Globs.Xp-floor(subset_size/2)+u_check[iter1]):(Globs.Xp+floor(subset_size/2)+u_check[iter1])+1,0]
 
             sum_diff_sq[iter2,iter1] = np.sum(np.sum(np.square(subref-subdef)))
-    #print(subdef)
+
     OFFSET1 = np.argmin(np.min(sum_diff_sq, axis=1)) # These offsets are +1 in MATLAB
     OFFSET2 = np.argmin(np.min(sum_diff_sq, axis=0))
-    #print(OFFSET1)
-    #print(OFFSET2)
-    q_0[0] = u_check[OFFSET1]
-    q_0[1] = u_check[OFFSET2]
+
+    q_0[0] = u_check[OFFSET2]
+    q_0[1] = v_check[OFFSET1]
+
     del u_check
     del v_check
     del iter1 
@@ -155,20 +143,21 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     # MAIN CORRELATION LOOP -- CORRELATE THE POINTS REQUESTED
 
     # for i=1:length(pts(:,1))
-    for yy in range(Ymin,Ymax):
+    for yy in range(Ymin, Ymax + 1):
         if yy > Ymin:
-            q_k[0:6] = DEFORMATION_PARAMETERS[yy-1,Xmin,0:6]
-        for xx in range(Xmin, Xmax):
+            q_k[0:6] = DEFORMATION_PARAMETERS[yy - 1, Xmin, 0:6]
+
+        for xx in range(Xmin, Xmax + 1):
             #Points for correlation and initializaing the q matrix
-            Globs.Xp = xx
-            Globs.Yp = yy
+            Globs.Xp = xx + 1
+            Globs.Yp = yy + 1
             #t_tmp = toc
 
             # __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
             # if (itr_skip == 0)
             # Initialize some values
             n = 0
-            C_last, GRAD_last, HESS = C_First_Order.C_First_Order(q_k) # q_k was the result from last point or the user's guess
+            C_last, GRAD_last, HESS = C_First_Order(q_k) # q_k was the result from last point or the user's guess
             optim_completed = False
 
             if np.isnan(abs(np.mean(np.mean(HESS)))):
@@ -177,15 +166,15 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
                 optim_completed = True
             while not optim_completed:
                 # Compute the next guess and update the values
-                delta_q = np.linalg.lstsq(HESS,(-GRAD_last)) # Find the difference between q_k+1 and q_k
+                delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
                 q_k = q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
-                C, GRAD, HESS = C_First_Order.C_First_Order(q_k) # Compute new values
+                C, GRAD, HESS = C_First_Order(q_k) # Compute new values
                 
                 # Add one to the iteration counter
                 n = n + 1 # Keep track of the number of iterations
 
                 # Check to see if the values have converged according to the stopping criteria
-                if n > Max_num_iter or ( abs(C-C_last) < TOL[0] and all(abs(delta_q[0]) < TOL[1])): #needs to be tested...
+                if n > Max_num_iter or (abs(C-C_last) < TOL[0] and all(abs(delta_q[0]) < TOL[1])): #needs to be tested...
                     optim_completed = True
                 
                 C_last = C #Save the C value for comparison in the next iteration
@@ -210,28 +199,30 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
             DEFORMATION_PARAMETERS[yy,xx,10] = 0 #t_tmp # time of spline process
             DEFORMATION_PARAMETERS[yy,xx,11] = 0 #t_optim # time of optimization process
 
+    '''
         print(yy)
         print(xx)
-    
-    filename = 'DEFORMATION_PARAMETERS({:s}, {:s}, {:d}).csv'.format(ref_img, def_img, Globs.subset_size)
-    '''
-    for slice_2d in DEFORMATION_PARAMETERS:
-        savetxt_compact(filename, slice_2d)
-    return
-    '''
+
+
+    filename = f"DEFORMATION_PARAMETERS({ref_img}, {def_img}, {Globs.subset_size})".replace('/', '')
     xxx,yyy,zzz = DEFORMATION_PARAMETERS.shape
-    '''
-    
-    for d1 in range(0:xxx):
-        for d2 in range(0:yyy):
-    '''
-    
     sav = np.swapaxes(DEFORMATION_PARAMETERS,2,1).reshape((xxx,yyy*zzz), order='A')
-    savetxt_compact('_compact_' + filename, sav)
-    #savetxt_compact('_compact_two_' + filename, DEFORMATION_PARAMETERS)
+    savetxt_compact(filename, sav)
+    savetxt_compact_matlab(filename, sav)
+    '''
 
-    
+    return []
 
+def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
+    with open(f"compact_{fname}.csv", 'w+') as fh:
+        for row in x:
+            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+            fh.write(line + '\n')
 
+def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
+    with open(f"matlab_{fname}.csv", 'w+') as fh:
+        for row in x:
+            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+            fh.write(line + '\n')
 
 DIC_NR_images("ref50.bmp", "def50.bmp", 7, [0, 0])
