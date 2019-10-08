@@ -1,6 +1,7 @@
-import math
+from math import floor
 import numpy as np
 import scipy as sp
+#import deformation_measurement.Globs as Globs
 import Globs
 
 def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
@@ -33,8 +34,8 @@ def C_First_Order(q, nargout=3):
 	def_interp_x = Globs.def_interp_x
 	def_interp_y = Globs.def_interp_y
 
-	i = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2)+1)
-	j = np.arange(-math.floor(subset_size/2), math.floor(subset_size/2)+1)
+	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
+	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
 
 	I_matrix, J_matrix = np.meshgrid(i, j)
 
@@ -45,9 +46,8 @@ def C_First_Order(q, nargout=3):
 	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
 	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
 
+	f = np.reshape(ref_image[(Yp + J_matrix - 1), (Xp + I_matrix - 1), 0], (1, N), 'F')
 	#tmp = ref_image[(Yp + J_matrix), (Xp + I_matrix),0]
-	
-	f = np.reshape(ref_image[(Yp + J_matrix), (Xp + I_matrix),0], (1, N), 'F')
 	#np.vstack((Y,X))
 	t = def_interp.ev(X,Y)
 	g = np.zeros_like(t)
