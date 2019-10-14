@@ -15,12 +15,13 @@ def initial_guess(ref_img, def_img, ini_guess, subset_size, Xp, Yp):
     q_0 = np.zeros(6)
     q_0[0:2] = ini_guess
 
-    range_ = 15 # Minus 1 for array starting at zero?
-    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
-    v_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
+    # check all values of u & v within +/- 15 range of initial guess
+    range_ = 15
+    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_), 1, dtype=int)
+    v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_), 1, dtype=int)
 
     # Define the intensities of the first reference subset
-    subref = ref_img[Yp-floor(subset_size/2):(Yp+floor(subset_size/2))+1, Xp-floor(subset_size/2):Xp+floor(subset_size/2)+1,0]
+    subref = ref_img[Yp-floor(subset_size/2):(Yp+floor(subset_size/2)), Xp-floor(subset_size/2):Xp+floor(subset_size/2),0]
     
     # Preallocate some matrix space
     sum_diff_sq = np.zeros((u_check.size, v_check.size))
@@ -29,16 +30,16 @@ def initial_guess(ref_img, def_img, ini_guess, subset_size, Xp, Yp):
         for iter2 in range(v_check.size):
 
             #Define intensities for deformed subset
-            subdef = def_img[(Yp-floor(subset_size/2)+v_check[iter2]):(Yp+floor(subset_size/2)+v_check[iter2])+1, (Xp-floor(subset_size/2)+u_check[iter1]):(Xp+floor(subset_size/2)+u_check[iter1])+1,0]
+            subdef = def_img[Yp-floor(subset_size/2)+v_check[iter2]:Yp+floor(subset_size/2)+v_check[iter2], Xp-floor(subset_size/2)+u_check[iter1]:Xp+floor(subset_size/2)+u_check[iter1],0]
 
-            #extra sum here?
-            sum_diff_sq[iter2,iter1] = np.sum(np.sum(np.square(subref-subdef)))
+            sum_diff_sq[iter1,iter2] = np.sum(np.square(subref-subdef))
 
-    OFFSET1 = np.argmin(np.min(sum_diff_sq, axis=1)) # These offsets are +1 in MATLAB
-    OFFSET2 = np.argmin(np.min(sum_diff_sq, axis=0))
+    #These indexes locate the u & v value(in the initial range we are checking through) which returned the smallest sum of differences squared.
+    u_value_index = np.argmin(np.min(sum_diff_sq, axis=1))
+    v_value_index = np.argmin(np.min(sum_diff_sq, axis=0))
 
-    q_0[0] = u_check[OFFSET2]
-    q_0[1] = v_check[OFFSET1]
+    q_0[0] = u_check[u_value_index]
+    q_0[1] = v_check[v_value_index]
 
     q_k = q_0[0:6]
 
@@ -99,11 +100,13 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     must away from edge greater than half of subset adding 15 to it to have
     range of initial guess accuracy.
     '''
-    Xmin = round((subset_size/2) + 15) # Might need to make it 14 cuz of arrays starting at 0
+    # +15 due to range of calc in initial_guess
+    # -1 due to python indexing at 0, keep outside of rounding
+    Xmin = round((subset_size/2) + 15) -1
     Ymin = Xmin
 
-    Xmax = round(X_size-((subset_size/2) + 15))
-    Ymax = round(Y_size-((subset_size/2) + 15))
+    Xmax = round(X_size-((subset_size/2) + 15)) - 1
+    Ymax = round(Y_size-((subset_size/2) + 15)) - 1
     Globs.Xp = Xmin
     Globs.Yp = Ymin
 

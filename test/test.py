@@ -66,18 +66,26 @@ class TestFunctions(unittest.TestCase):
 
 	def test_initial_guess(self):
 
+		#TEST 1
+		#moving "image" all to right by 1, u = 1, v = 0
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+		def_img = np.roll(ref_img.copy(), 1, axis = 1)
+
+		q_k = initial_guess(ref_img, def_img, [0,0], 11, 20, 20)
+
+		self.assertEqual(q_k[0],1)
+		self.assertEqual(q_k[1],0)
+
+		#TEST 2
+		#comparing the same image with itself, u & v should equal 0
 		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
 		test_image_1 = test_image_1.astype('d')
 
-		q_k = initial_guess(test_image_1, test_image_1, [0,0], 15, 25, 25)
-		#should be all 0
-		print(q_k)
+		q_k = initial_guess(test_image_1, test_image_1, [0,0], 11, 20, 20)
 
-		a = np.array([[1,2],[3,4]])
-		b = np.array([[1,1],[1,1]])
-		print(np.square(a-b))
-		print(np.sum(np.square(a-b)))
-		print(np.sum(np.sum(np.square(a-b))))
+		self.assertEqual(q_k[0], 0)
+		self.assertEqual(q_k[1], 0)
 
 	def test_fit_spline(self):
 
