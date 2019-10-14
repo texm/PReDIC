@@ -1,12 +1,69 @@
-#from deformation_measurement.C_First_Order import C_First_Order
-from C_First_Order import C_First_Order
-#import deformation_measurement.Globs as Globs
-import Globs
+from deformation_measurement.C_First_Order import C_First_Order
+#import C_First_Order
+import deformation_measurement.Globs as Globs
+#import Globs
 
 from math import floor
 import numpy as np
 from PIL import Image
 from scipy.interpolate import splrep, PPoly, RectBivariateSpline, BSpline, BPoly, bisplev, bisplrep, splder
+
+def initial_guess(ref_img, def_img, ini_guess, subset_size, Xp, Yp):
+
+    # Automatic Initial Guess
+    #q_0 = np.zeros_like([], shape=6)
+    q_0 = np.zeros(6)
+    q_0[0:2] = ini_guess
+
+    range_ = 15 # Minus 1 for array starting at zero?
+    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
+    v_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
+
+    # Define the intensities of the first reference subset
+    subref = ref_img[Yp-floor(subset_size/2):(Yp+floor(subset_size/2))+1, Xp-floor(subset_size/2):Xp+floor(subset_size/2)+1,0]
+    
+    # Preallocate some matrix space
+    sum_diff_sq = np.zeros((u_check.size, v_check.size))
+    # Check every value of u and v and see where the best match occurs
+    for iter1 in range(u_check.size):
+        for iter2 in range(v_check.size):
+
+            #Define intensities for deformed subset
+            subdef = def_img[(Yp-floor(subset_size/2)+v_check[iter2]):(Yp+floor(subset_size/2)+v_check[iter2])+1, (Xp-floor(subset_size/2)+u_check[iter1]):(Xp+floor(subset_size/2)+u_check[iter1])+1,0]
+
+            #extra sum here?
+            sum_diff_sq[iter2,iter1] = np.sum(np.sum(np.square(subref-subdef)))
+
+    OFFSET1 = np.argmin(np.min(sum_diff_sq, axis=1)) # These offsets are +1 in MATLAB
+    OFFSET2 = np.argmin(np.min(sum_diff_sq, axis=0))
+
+    q_0[0] = u_check[OFFSET2]
+    q_0[1] = v_check[OFFSET1]
+
+    q_k = q_0[0:6]
+
+    return q_k
+
+
+def fit_spline(ref_img, def_img, spline_order):
+
+    # Obtain the size of the reference image
+    Y_size, X_size,tmp = ref_img.shape
+
+    # Define the deformed image's coordinates
+    X_defcoord = np.arange(0, X_size, dtype=int) # Maybe zero?
+    Y_defcoord = np.arange(0, Y_size, dtype=int)
+
+    #Fit spline
+    def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, def_img[:,:,0], kx=spline_order-1, ky=spline_order-1)
+    #why subtract 1 from spline order?
+
+    #Evaluate derivatives at coordinates
+    def_interp_x = def_interp(X_defcoord, Y_defcoord, 0, 1)
+    def_interp_y = def_interp(X_defcoord, Y_defcoord, 1, 0)
+
+    return def_interp, def_interp_x, def_interp_y
+
 
 def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args,**kwargs):
     
@@ -55,47 +112,13 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     
     #_____________Automatic Initial Guess_____________
 
-    # Automatic Initial Guess
-    q_0 = np.zeros_like([], shape=(6))
-    q_0[0:2] = ini_guess
-
-    range_ = 15 # Minus 1 for array starting at zero?
-    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
-    v_check = np.arange((round(q_0[0]) - range_), (round(q_0[1]) + range_) + 1, dtype=int)
-
-    # Define the intensities of the first reference subset
-    subref = Globs.ref_image[Globs.Yp-floor(subset_size/2):(Globs.Yp+floor(subset_size/2))+1, Globs.Xp-floor(subset_size/2):Globs.Xp+floor(subset_size/2)+1,0]
-    
-    # Preallocate some matrix space
-    sum_diff_sq = np.zeros((u_check.size, v_check.size))
-    # Check every value of u and v and see where the best match occurs
-    for iter1 in range(u_check.size):
-        for iter2 in range(v_check.size):
-            subdef = Globs.def_image[(Globs.Yp-floor(subset_size/2)+v_check[iter2]):(Globs.Yp+floor(subset_size/2)+v_check[iter2])+1, (Globs.Xp-floor(subset_size/2)+u_check[iter1]):(Globs.Xp+floor(subset_size/2)+u_check[iter1])+1,0]
-
-            sum_diff_sq[iter2,iter1] = np.sum(np.sum(np.square(subref-subdef)))
-
-    OFFSET1 = np.argmin(np.min(sum_diff_sq, axis=1)) # These offsets are +1 in MATLAB
-    OFFSET2 = np.argmin(np.min(sum_diff_sq, axis=0))
-
-    q_0[0] = u_check[OFFSET2]
-    q_0[1] = v_check[OFFSET1]
-
-    del u_check
-    del v_check
-    del iter1 
-    del iter2 
-    del subref 
-    del subdef
-    del sum_diff_sq
-    del OFFSET1 
-    del OFFSET2
+    #Calculate quick guess for u&v through sum of differences squared?
+    # Set the initial guess to be the "last iteration's" solution.
+    q_k = initial_guess(Globs.ref_image, Globs.def_image, ini_guess, subset_size, Globs.Xp, Globs.Yp)
 
     # Preallocate the matrix that holds the deformation parameter results
     DEFORMATION_PARAMETERS = np.zeros_like([], shape=(Y_size,X_size,12))
 
-    # Set the initial guess to be the "last iteration's" solution.
-    q_k = q_0[0:6]
 
     #_______________COMPUTATIONS________________
 
@@ -103,39 +126,9 @@ def DIC_NR_images(ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args
     #tic????
 
     #__________FIT SPLINE ONTO DEFORMED SUBSET________________________
-    # Obtain the size of the reference image
-    Y_size, X_size,tmp = Globs.ref_image.shape
-    
-    # Define the deformed image's coordinates
-    X_defcoord = np.arange(0, X_size, dtype=int) # Maybe zero?
-    Y_defcoord = np.arange(0, Y_size, dtype=int)
 
-    #spline = splrep(X_defcoord, Y_defcoord)
-    #Globs.def_interp = PPoly.from_spline(spline)
-    Globs.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=spline_order-1, ky=spline_order-1)
+    Globs.def_interp, Globs.def_interp_x, Globs.def_interp_y = fit_spline(Globs.ref_image, Globs.def_image, spline_order)
 
-
-    #Globs.def_interp_x = Globs.def_interp.ev(0,1)
-    #Globs.def_interp_y = Globs.def_interp.ev(1,0)
-    '''
-    Globs.def_interp_x = Globs.def_interp(X_defcoord, Y_defcoord, 0, 1)
-    Globs.def_interp_x = BPoly.from_derivatives(xi=X_defcoord,yi=Globs.def_interp_x)
-
-    Globs.def_interp_y = Globs.def_interp(X_defcoord, Y_defcoord, 1, 0)
-    Globs.def_interp_y = BPoly.from_derivatives(xi=Y_defcoord,yi=Globs.def_interp_y)
-    #Globs.def_interp_y = BSpline.derivative(Globs.def_interp,[1,0])
-    '''
-    '''
-    test = splder(Globs.def_interp.tcl,1)
-    Globs.def_interp_x = bisplev(X_defcoord, Y_defcoord, Globs.def_interp.tck+(5,)+(5,), 0, 1)
-    Globs.def_interp_y = bisplev(X_defcoord, Y_defcoord, Globs.def_interp.tck+(5,)+(5,), 1, 0)
-    '''
-    '''
-    Globs.def_interp_x = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=5, ky=4)
-    Globs.def_interp_y = RectBivariateSpline(X_defcoord, Y_defcoord, Globs.def_image[:,:,0], kx=4, ky=5)
-    '''
-    Globs.def_interp_x = Globs.def_interp(X_defcoord, Y_defcoord, 0, 1)
-    Globs.def_interp_y = Globs.def_interp(X_defcoord, Y_defcoord, 1, 0)
     #_________________________________________________________________________ 
     #t_interp = toc;    # Save the amount of time it took to interpolate
 
@@ -225,4 +218,4 @@ def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
             line = delimiter.join("0" if value == 0 else fmt % value for value in row)
             fh.write(line + '\n')
 
-DIC_NR_images("ref50.bmp", "def50.bmp", 7, [0, 0])
+#DIC_NR_images("ref50.bmp", "def50.bmp", 7, [0, 0])

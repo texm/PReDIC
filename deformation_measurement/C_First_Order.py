@@ -1,8 +1,8 @@
 from math import floor
 import numpy as np
 import scipy as sp
-#import deformation_measurement.Globs as Globs
-import Globs
+import deformation_measurement.Globs as Globs
+#import Globs
 
 def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
 	N = subset_size * subset_size
