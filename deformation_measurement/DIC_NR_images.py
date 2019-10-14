@@ -3,47 +3,114 @@ from deformation_measurement.C_First_Order import C_First_Order
 import deformation_measurement.Globs as Globs
 #import Globs
 
-from math import floor
+from math import floor, ceil
 import numpy as np
 from PIL import Image
 from scipy.interpolate import splrep, PPoly, RectBivariateSpline, BSpline, BPoly, bisplev, bisplrep, splder
 
-def initial_guess(ref_img, def_img, ini_guess, subset_size, Xp, Yp):
+class DIC_NR:
 
-    # Automatic Initial Guess
-    #q_0 = np.zeros_like([], shape=6)
-    q_0 = np.zeros(6)
-    q_0[0:2] = ini_guess
+    def __init__(self,ref_img=None,def_img=None,subsetSize=None,ini_guess=None,*args,**kwargs):
 
-    # check all values of u & v within +/- 15 range of initial guess
-    range_ = 15
-    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_)+1, 1, dtype=int)
-    v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_)+1, 1, dtype=int)
+        # Initialize variables
+        self.subset_size = subsetSize
+        self.spline_order = 6
+        self.ini_guess = ini_guess
 
-    # Define the intensities of the first reference subset
-    subref = ref_img[Yp-floor(subset_size/2):(Yp+floor(subset_size/2)), Xp-floor(subset_size/2):Xp+floor(subset_size/2),0]
-    
-    # Preallocate some matrix space
-    sum_diff_sq = np.zeros((u_check.size, v_check.size))
-    # Check every value of u and v and see where the best match occurs
-    for iter1 in range(u_check.size):
-        for iter2 in range(v_check.size):
+        # Make sure that the subset size specified is valid (not odd at this point)
+        if (self.subset_size % 2 == 0):
+            raise ValueError("Subset size must be odd")
 
-            #Define intensities for deformed subset
-            subdef = def_img[Yp-floor(subset_size/2)+v_check[iter2]:Yp+floor(subset_size/2)+v_check[iter2], Xp-floor(subset_size/2)+u_check[iter1]:Xp+floor(subset_size/2)+u_check[iter1],0]
+        # Prepare for trouble (load images) (default directory is current working directory) https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
+        self.ref_image = np.array(Image.open(ref_img).convert('LA')) # numpy.array
+        self.def_image = np.array(Image.open(def_img).convert('LA')) # numpy.array
 
-            sum_diff_sq[iter1,iter2] = np.sum(np.square(subref-subdef))
+        # Make it double
+        self.ref_image = self.ref_image.astype('d') # convert to double
+        self.def_image = self.def_image.astype('d') # convert to double
 
-    #These indexes locate the u & v value(in the initial range we are checking through) which returned the smallest sum of differences squared.
-    u_value_index = np.argmin(np.min(sum_diff_sq, axis=1))
-    v_value_index = np.argmin(np.min(sum_diff_sq, axis=0))
+        # Obtain the size of the reference image
+        self.X_size, self.Y_size, self._tmp= self.ref_image.shape
 
-    q_0[0] = u_check[u_value_index]
-    q_0[1] = v_check[v_value_index]
+        # Termination condition for newton-raphson iteration
+        self.Max_num_iter = 40 # maximum number of iterations
+        self.TOL = [0,0]
+        self.TOL[0] = 10**(-8) # change in correlation coeffiecient
+        self.TOL[1] = 10**(-8)/2 # change in sum of all gradients.
 
-    q_k = q_0[0:6]
+        '''
+        condition to check that point of interest is not close to edge. Point
+        must away from edge greater than half of subset adding 15 to it to have
+        range of initial guess accuracy.
+        '''
+        # +15 due to range of calc in initial_guess
+        # -1 due to python indexing at 0, keep outside of rounding, using ceil as round will round down at 0.5
+        self.Xmin = ceil((self.subset_size/2) + 15) -1
+        self.Ymin = self.Xmin
 
-    return q_k
+        self.Xmax = ceil(self.X_size-((self.subset_size/2) + 15)) - 1
+        self.Ymax = ceil(self.Y_size-((self.subset_size/2) + 15)) - 1
+        self.Xp = self.Xmin
+        self.Yp = self.Ymin
+
+        if ( (self.Xp < self.Xmin) or (self.Yp < self.Ymin) or (self.Xp > self.Xmax) or  (self.Yp > self.Ymax) ):
+            raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ')
+
+        self.q_k = np.zeros(6)
+
+    def initial_guess(self, ref_image, def_image, ini_guess, subset_size, Xp, Yp):
+
+        # Automatic Initial Guess
+        #q_0 = np.zeros_like([], shape=6)
+        q_0 = np.zeros(6)
+        q_0[0:2] = ini_guess
+
+        # check all values of u & v within +/- 15 range of initial guess
+        range_ = 15
+        u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_)+1, 1, dtype=int)
+        v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_)+1, 1, dtype=int)
+
+        # Define the intensities of the first reference subset
+        subref = ref_image[Yp-floor(subset_size/2):(Yp+floor(subset_size/2)), Xp-floor(subset_size/2):Xp+floor(subset_size/2),0]
+        
+        # Preallocate some matrix space
+        sum_diff_sq = np.zeros((u_check.size, v_check.size))
+        # Check every value of u and v and see where the best match occurs
+        for iter1 in range(u_check.size):
+            for iter2 in range(v_check.size):
+
+                #Define intensities for deformed subset
+                subdef = def_image[Yp-floor(subset_size/2)+v_check[iter2]:Yp+floor(subset_size/2)+v_check[iter2], Xp-floor(subset_size/2)+u_check[iter1]:Xp+floor(subset_size/2)+u_check[iter1],0]
+
+                sum_diff_sq[iter1,iter2] = np.sum(np.square(subref-subdef))
+
+        #These indexes locate the u & v value(in the initial range we are checking through) which returned the smallest sum of differences squared.
+        u_value_index = np.argmin(np.min(sum_diff_sq, axis=1))
+        v_value_index = np.argmin(np.min(sum_diff_sq, axis=0))
+
+        q_0[0] = u_check[u_value_index]
+        q_0[1] = v_check[v_value_index]
+
+        self.q_k = q_0[0:6]
+
+    def fit_spline(self, ref_img, def_img, spline_order):
+
+        # Obtain the size of the reference image
+        Y_size, X_size,tmp = ref_img.shape
+
+        # Define the deformed image's coordinates
+        X_defcoord = np.arange(0, X_size, dtype=int) # Maybe zero?
+        Y_defcoord = np.arange(0, Y_size, dtype=int)
+
+        #Fit spline
+        self.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, def_img[:,:,0], kx=spline_order-1, ky=spline_order-1)
+        #why subtract 1 from spline order?
+
+        #Evaluate derivatives at coordinates
+        self.def_interp_x = self.def_interp(X_defcoord, Y_defcoord, 0, 1)
+        self.def_interp_y = self.def_interp(X_defcoord, Y_defcoord, 1, 0)
+
+
 
 
 def fit_spline(ref_img, def_img, spline_order):
