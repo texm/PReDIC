@@ -1,8 +1,39 @@
 from math import floor
 import numpy as np
 import scipy as sp
+import deformation_measurement.Globs as Globs
+#import Globs
 
-def C_First_Order(q, _G, nargout=2):
+def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
+	N = subset_size * subset_size
+	t = def_interp.ev(X,Y,dx=xd, dy=yd)
+	g = np.zeros_like(t)
+	tmp = 0
+	for first_index in range(1,subset_size+1):
+		for second_index in range(1,subset_size+1):
+			g[0,tmp] = t[0,((second_index - 1)*7+first_index)-1]
+			tmp+=1
+	return g
+
+def define_deformed_subset(subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy):
+
+	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
+	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
+
+	I_matrix, J_matrix = np.meshgrid(i, j)
+
+	N = subset_size * subset_size
+	I = np.reshape(I_matrix, (1, N), 'F')
+	J = np.reshape(J_matrix, (1, N), 'F')
+
+	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
+	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
+
+	return i, j, I_matrix, J_matrix, N, I, J, X, Y
+
+
+def C_First_Order(q, nargout=3):
+
 	C = 0.0
 	GRAD = 0.0
 	HESS = 0.0
@@ -14,39 +45,49 @@ def C_First_Order(q, _G, nargout=2):
 	du_dy       = q[4]
 	dv_dx       = q[5]
 
-	subset_size = _G["subset_size"]
-	ref_image = _G["ref_image"]
-	Xp = _G["Xp"]
-	Yp = _G["Yp"]
-	def_interp = _G["def_interp"]
-	def_interp_x = _G["def_interp_x"]
-	def_interp_y = _G["def_interp_y"]
+	subset_size = Globs.subset_size
+	ref_image = Globs.ref_image
+	Xp = Globs.Xp
+	Yp = Globs.Yp
+	def_interp = Globs.def_interp
+	def_interp_x = Globs.def_interp_x
+	def_interp_y = Globs.def_interp_y
 
-	i = np.arange(-floor(subset_size/2), floor(subset_size/2) + 1)
-	j = np.arange(-floor(subset_size/2), floor(subset_size/2) + 1)
+	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
+	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
 
 	I_matrix, J_matrix = np.meshgrid(i, j)
 
-	N = np.multiply(subset_size, subset_size)
-
-	I = np.reshape(I_matrix, (1, N))
-	J = np.reshape(J_matrix, (1, N))
+	N = subset_size * subset_size
+	I = np.reshape(I_matrix, (1, N), 'F')
+	J = np.reshape(J_matrix, (1, N), 'F')
 
 	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
 	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
 
-	# TODO: why is ref_image[Yp +j, Xp + i] not len 50? (size 14)
-	f = np.reshape(ref_image[Yp + j, Xp + i], (1, N))
-	g = def_interp(Y, X)
+	f = np.reshape(ref_image[(Yp + J_matrix - 1), (Xp + I_matrix - 1), 0], (1, N), 'F')
+	#tmp = ref_image[(Yp + J_matrix), (Xp + I_matrix),0]
+	#np.vstack((Y,X))
+	t = def_interp.ev(X,Y)
+	g = np.zeros_like(t)
+	tmp = 0
+	for first_index in range(1,subset_size+1):
+		for second_index in range(1,subset_size+1):
+			g[0,tmp] = t[0,((second_index - 1)*7+first_index)-1]
+			tmp+=1
+	#print(f)
+	#print(g)
+	temp = (f-g)
+	#print(temp)
 
-	SS_f_g = np.sum(np.sum(np.power((f-g), 2)))
-	SS_f_sq = np.sum(np.sum(np.power(f, 2)))
+	SS_f_g = np.sum(np.sum(np.square((f-g))))
+	SS_f_sq = np.sum(np.sum(np.square(f)))
 
 	C = np.divide(SS_f_g, SS_f_sq)
 
 	if nargout > 1:
-		dg_dX = def_interp_x(Y, X)
-		dg_dY = def_interp_x(Y, X)
+		dg_dX = ev_concatenate(def_interp, X,Y,subset_size,0,1)
+		dg_dY = ev_concatenate(def_interp, X,Y,subset_size,1,0)
 
 		dX_du = 1
 		dX_dv = 0
@@ -67,9 +108,9 @@ def C_First_Order(q, _G, nargout=2):
 		dg_dudx = np.multiply(dg_dX, dX_dudx) + np.multiply(dg_dY, dY_dudx)
 		dg_dvdy = np.multiply(dg_dX, dX_dvdy) + np.multiply(dg_dY, dY_dvdy)
 		dg_dudy = np.multiply(dg_dX, dX_dudy) + np.multiply(dg_dY, dY_dudy)
-		dg_dvdx = np.multiply(dg_dX, dX_dxdx) + np.multiply(dg_dY, dY_dvdx)
+		dg_dvdx = np.multiply(dg_dX, dX_dvdx) + np.multiply(dg_dY, dY_dvdx)
 
-		dC_du = np.sum(np.sum(np.multiply(g-f, dg_du)))
+		dC_du = np.sum(np.sum(np.multiply((g-f), dg_du)))
 		dC_dv = np.sum(np.sum(np.multiply(g-f, dg_dv)))
 		dC_dudx = np.sum(np.sum(np.multiply(g-f, dg_dudx)))
 		dC_dvdy = np.sum(np.sum(np.multiply(g-f, dg_dvdy)))
@@ -114,6 +155,6 @@ def C_First_Order(q, _G, nargout=2):
 				[d2C_dududy, d2C_dvdudy, d2C_dudxdudy, d2C_dvdydudy, d2C_dudy2,    d2C_dudydvdx],
 				[d2C_dudvdx, d2C_dvdvdx, d2C_dudxdvdx, d2C_dvdydvdx, d2C_dudydvdx, d2C_dvdx2]
 			])
-		HESS = np.multiply(2/SS_f_sq, marr)
+		HESS = np.multiply((2/SS_f_sq), marr)
 
 	return C, GRAD, HESS
