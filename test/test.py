@@ -8,6 +8,7 @@ from deformation_measurement import DIC_NR_images
 from deformation_measurement import C_First_Order
 
 from deformation_measurement.DIC_NR_images import *
+from deformation_measurement.C_First_Order import *
 #from test_generated import generate_images
 
 import numpy as np
@@ -111,6 +112,21 @@ class TestFunctions(unittest.TestCase):
 		print(result1)
 		print(result2)
 		print(result3)
+
+	def test_define_deformed_subset(self):
+
+		i, j, I_matrix, J_matrix, N, I, J, X, Y = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
+		print(i)
+		print(j)
+		print(I_matrix)
+		print(J_matrix)
+		print(N)
+		print(I)
+		print(I.shape)
+		print(J)
+		print(J.shape)
+		print(X)
+		print(Y)
 
     
 

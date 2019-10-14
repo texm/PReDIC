@@ -15,7 +15,25 @@ def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
 			tmp+=1
 	return g
 
+def define_deformed_subset(subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy):
+
+	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
+	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
+
+	I_matrix, J_matrix = np.meshgrid(i, j)
+
+	N = subset_size * subset_size
+	I = np.reshape(I_matrix, (1, N), 'F')
+	J = np.reshape(J_matrix, (1, N), 'F')
+
+	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
+	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
+
+	return i, j, I_matrix, J_matrix, N, I, J, X, Y
+
+
 def C_First_Order(q, nargout=3):
+
 	C = 0.0
 	GRAD = 0.0
 	HESS = 0.0
@@ -26,6 +44,7 @@ def C_First_Order(q, nargout=3):
 	dv_dy       = q[3]
 	du_dy       = q[4]
 	dv_dx       = q[5]
+
 	subset_size = Globs.subset_size
 	ref_image = Globs.ref_image
 	Xp = Globs.Xp

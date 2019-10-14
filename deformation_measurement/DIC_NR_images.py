@@ -17,8 +17,8 @@ def initial_guess(ref_img, def_img, ini_guess, subset_size, Xp, Yp):
 
     # check all values of u & v within +/- 15 range of initial guess
     range_ = 15
-    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_), 1, dtype=int)
-    v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_), 1, dtype=int)
+    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_)+1, 1, dtype=int)
+    v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_)+1, 1, dtype=int)
 
     # Define the intensities of the first reference subset
     subref = ref_img[Yp-floor(subset_size/2):(Yp+floor(subset_size/2)), Xp-floor(subset_size/2):Xp+floor(subset_size/2),0]
