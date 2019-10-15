@@ -51,9 +51,11 @@ class DIC_NR:
         if ( (self.Xp < self.Xmin) or (self.Yp < self.Ymin) or (self.Xp > self.Xmax) or  (self.Yp > self.Ymax) ):
             raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ')
 
+        self.initial_guess()
+        self.fit_spline()
 
     def initial_guess(self, ref_img=None, def_img=None):
-        if type(ref_img) == None or type(def_img) == None:
+        if type(ref_img) == type(None) or type(def_img) == type(None):
             ref_img = self.ref_image
             def_img = self.def_image
 
@@ -173,7 +175,7 @@ class DIC_NR:
                     n = n + 1 # Keep track of the number of iterations
 
                     # Check to see if the values have converged according to the stopping criteria
-                    if n > self.Max_num_iter or (abs(C-C_last) < TOL[0] and all(abs(delta_q[0]) < TOL[1])): #needs to be tested...
+                    if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
                         optim_completed = True
                     
                     C_last = C #Save the C value for comparison in the next iteration
@@ -212,16 +214,3 @@ class DIC_NR:
         '''
 
         return DEFORMATION_PARAMETERS
-
-
-def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
-    with open(f"compact_{fname}.csv", 'w+') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')
-
-def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
-    with open(f"matlab_{fname}.csv", 'w+') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')

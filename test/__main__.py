@@ -4,6 +4,7 @@ sys.path.append(PARENT_DIR)
 TEST_IMAGE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/testing_images/"
 
 from deformation_measurement import DIC_NR
+
 from deformation_measurement.C_First_Order import *
 
 import numpy as np
@@ -128,10 +129,22 @@ class TestFunctions(unittest.TestCase):
 		'''
 
 	def test_whole(self):
-		pass
+		dic = DIC_NR("ref50.bmp", "def50.bmp", 7, [0, 0])
+		result = dic.calculate()
+		print(result)
+		x,y,z = result.shape
+		sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
+
+		savetxt_compact("output", sav)
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
     with open(f"compact_{fname}.csv", 'w+') as fh:
+        for row in x:
+            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+            fh.write(line + '\n')
+
+def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
+    with open(f"matlab_{fname}.csv", 'w+') as fh:
         for row in x:
             line = delimiter.join("0" if value == 0 else fmt % value for value in row)
             fh.write(line + '\n')

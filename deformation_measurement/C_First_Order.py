@@ -1,6 +1,5 @@
 from math import floor
 import numpy as np
-import scipy as sp
 
 def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
 	N = subset_size * subset_size
@@ -14,7 +13,6 @@ def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
 	return g
 
 def define_deformed_subset(subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy):
-
 	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
 	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
 
