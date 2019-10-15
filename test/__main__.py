@@ -3,7 +3,7 @@ PARENT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../"
 sys.path.append(PARENT_DIR)
 TEST_IMAGE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/testing_images/"
 
-from deformation_measurement.DIC_NR_images import DIC_NR
+from deformation_measurement import DIC_NR
 from deformation_measurement.C_First_Order import *
 
 import numpy as np
