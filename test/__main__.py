@@ -69,8 +69,8 @@ class TestFunctions(unittest.TestCase):
 		ref_img = np.insert(ref_img, 1, 0, axis = 2)
 		def_img = np.roll(ref_img.copy(), 1, axis = 1)
 
-		dicr_1 = DIC_NR("ref50.bmp", "ref50.bmp", 11, [0,0])
-		dicr_1.initial_guess()
+		dicr_1 = DIC_NR("ref50.bmp", "def50.bmp", 11, [0,0])
+		dicr_1.initial_guess(ref_img, def_img)
 
 		print(dicr_1.q_k)
 
@@ -80,7 +80,7 @@ class TestFunctions(unittest.TestCase):
 		#TEST 2
 		#comparing the same image with itself, u & v should equal 0
 		dicr = DIC_NR("ref50.bmp", "ref50.bmp", 11, [0,0])
-		dicr.initial_guess()
+		dicr.initial_guess(ref_img, ref_img)
 
 		self.assertEqual(dicr.q_k[0], 0)
 		self.assertEqual(dicr.q_k[1], 0)

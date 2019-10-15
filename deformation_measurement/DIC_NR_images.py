@@ -53,7 +53,11 @@ class DIC_NR:
             raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ')
 
 
-    def initial_guess(self):
+    def initial_guess(self, ref_img=None, def_img=None):
+        if type(ref_img) == None or type(def_img) == None:
+            ref_img = self.ref_image
+            def_img = self.def_image
+
         # Automatic Initial Guess
         #q_0 = np.zeros_like([], shape=6)
         q_0 = np.zeros(6)
@@ -65,7 +69,7 @@ class DIC_NR:
         v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_)+1, 1, dtype=int)
 
         half_subset = floor(self.subset_size / 2)
-        
+
         # Define the intensities of the first reference subset
         y0 = self.Yp - half_subset
         y1 = self.Yp + half_subset
@@ -73,7 +77,7 @@ class DIC_NR:
         x0 = self.Xp - half_subset
         x1 = self.Xp + half_subset
         
-        subref = self.ref_image[y0:y1, x0:x1, 0]
+        subref = ref_img[y0:y1, x0:x1, 0]
         
         # Preallocate some matrix space
         sum_diff_sq = np.zeros((u_check.size, v_check.size))
@@ -89,7 +93,7 @@ class DIC_NR:
                 x0 = self.Xp - half_subset + u_check[iter1]
                 x1 = self.Xp + half_subset + u_check[iter1]
                 
-                subdef = self.def_image[y0:y1, x0:x1, 0]
+                subdef = def_img[y0:y1, x0:x1, 0]
 
                 sum_diff_sq[iter1, iter2] = np.sum(np.square(subref - subdef))
 
