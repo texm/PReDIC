@@ -138,16 +138,16 @@ class TestFunctions(unittest.TestCase):
 		savetxt_compact("output", sav)
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
-    with open(f"compact_{fname}.csv", 'w+') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')
+	with open(f"compact_{fname}.csv", 'w+') as fh:
+		for row in x:
+			line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+			fh.write(line + '\n')
 
 def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
-    with open(f"matlab_{fname}.csv", 'w+') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')
+	with open(f"matlab_{fname}.csv", 'w+') as fh:
+		for row in x:
+			line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+			fh.write(line + '\n')
 
 if __name__ == '__main__':
 	unittest.main()
