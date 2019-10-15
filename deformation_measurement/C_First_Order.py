@@ -13,7 +13,7 @@ def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
 			tmp+=1
 	return g
 
-def define_deformed_subset(subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy):
+def define_deformed_subset(def_interp, subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy):
 
 	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
 	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
@@ -27,7 +27,15 @@ def define_deformed_subset(subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy
 	X = Xp + u + I + np.multiply(I, du_dx) + np.multiply(J, du_dy)
 	Y = Yp + v + J + np.multiply(J, dv_dy) + np.multiply(I, dv_dx)
 
-	return i, j, I_matrix, J_matrix, N, I, J, X, Y
+	f= 0
+	#f = np.reshape(ref_image[(Yp + J_matrix - 1), (Xp + I_matrix - 1), 0], (1, N), 'F')
+	#tmp = ref_image[(Yp + J_matrix), (Xp + I_matrix),0]
+	#np.vstack((Y,X))
+	X = np.subtract(X, 1)
+	#Y = np.subtract(Y, 1)
+	t= def_interp.ev(X,Y)
+
+	return i, j, I_matrix, J_matrix, N, I, J, X, Y, f, t
 
 
 def C_First_Order(q, _G, nargout=3):
@@ -66,6 +74,7 @@ def C_First_Order(q, _G, nargout=3):
 	f = np.reshape(ref_image[(Yp + J_matrix - 1), (Xp + I_matrix - 1), 0], (1, N), 'F')
 	#tmp = ref_image[(Yp + J_matrix), (Xp + I_matrix),0]
 	#np.vstack((Y,X))
+	#t= def_interp.ev(Y,X)
 	t = def_interp.ev(X,Y)
 	g = np.zeros_like(t)
 	tmp = 0

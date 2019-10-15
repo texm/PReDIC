@@ -27,10 +27,10 @@ class TestFunctions(unittest.TestCase):
 		X_size, Y_size, _tmp= test_image_b.shape
 		#print(X_size, Y_size, _tmp)
 
-		col1 = test_image_b[48,0,0]
-		col2 = test_image_b[49,0,0]
+		#col1 = test_image_b[48,0,0]
+		#col2 = test_image_b[49,0,0]
 
-		test_image_c = test_image_b[:,:,0]
+		#test_image_c = test_image_b[:,:,0]
 		#print(test_image_c)
 
 		Y_size, X_size,tmp = test_image_b.shape
@@ -39,15 +39,39 @@ class TestFunctions(unittest.TestCase):
 		Y_defcoord = np.arange(0, Y_size, dtype=int)
 
 		interp = RectBivariateSpline(X_defcoord, Y_defcoord, test_image_b[:,:,0], kx=5, ky=5)
-		result1 = interp.ev(48,0)
-		result2 = interp.ev(48.5,0)
-		result3 = interp.ev(49,0)
+		#result1 = interp.ev(48,0)
+		#result2 = interp.ev(48.5,0)
+		#result3 = interp.ev(49,0)
 
 		interp_res = np.empty([50,50])
+
+		i, j, I_matrix, J_matrix, N, I, J, X, Y, f, t = define_deformed_subset( interp, 11, 21, 20, 0, 0, 0.0, 0.0, 0.0, 0.0)
+		'''
+		print(i)
+		print(j)
+		print(I_matrix)
+		print(J_matrix)
+		print(N)
+		print(I)
+		print(I.shape)
+		print(J)
+		print(J.shape)
+		print(X)
+		print(Y)
+		'''
+
+		t = np.reshape(t, (11,11))
+		t_t = np.transpose(t)
+		print(t_t)
+		#print(t_t)
+		print(t.shape)
 
 		for y in range(50):
 			for x in range(50):
 				interp_res[x][y] = interp.ev(x,y)
+
+		interp_res = np.transpose(interp_res)
+		print(interp_res[15:25, 15:25])
 
 		#savetxt_compact("image_actual", test_image_c)
 		#savetxt_compact("deform", interp_res)
@@ -112,8 +136,8 @@ class TestFunctions(unittest.TestCase):
 
 	def test_define_deformed_subset(self):
 
-		i, j, I_matrix, J_matrix, N, I, J, X, Y = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
-		'''
+		i, j, I_matrix, J_matrix, N, I, J, X, Y, f, t = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
+		
 		print(i)
 		print(j)
 		print(I_matrix)
@@ -125,7 +149,7 @@ class TestFunctions(unittest.TestCase):
 		print(J.shape)
 		print(X)
 		print(Y)
-		'''
+		
 
 	def test_whole(self):
 		pass
