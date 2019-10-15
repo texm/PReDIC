@@ -109,59 +109,6 @@ class DIC_NR:
         self.def_interp_x = self.def_interp(X_defcoord, Y_defcoord, 0, 1)
         self.def_interp_y = self.def_interp(X_defcoord, Y_defcoord, 1, 0)
 
-def initial_guess(ref_image, def_image, ini_guess, subset_size, Xp, Yp):
-
-    # Automatic Initial Guess
-    #q_0 = np.zeros_like([], shape=6)
-    q_0 = np.zeros(6)
-    q_0[0:2] = ini_guess
-
-    # check all values of u & v within +/- 15 range of initial guess
-    range_ = 15
-    u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_) + 1, 1, dtype=int)
-    v_check = np.arange((round(q_0[1]) - range_), (round(q_0[1]) + range_) + 1, 1, dtype=int)
-
-    # Define the intensities of the first reference subset
-    subref = ref_image[Yp-floor(subset_size/2):(Yp+floor(subset_size/2)), Xp-floor(subset_size/2):Xp+floor(subset_size/2),0]
-
-    # Preallocate some matrix space
-    sum_diff_sq = np.zeros((u_check.size, v_check.size))
-    # Check every value of u and v and see where the best match occurs
-    for iter1 in range(u_check.size):
-        for iter2 in range(v_check.size):
-
-            #Define intensities for deformed subset
-            subdef = def_image[Yp-floor(subset_size/2)+v_check[iter2]:Yp+floor(subset_size/2)+v_check[iter2], Xp-floor(subset_size/2)+u_check[iter1]:Xp+floor(subset_size/2)+u_check[iter1],0]
-            sum_diff_sq[iter1,iter2] = np.sum(np.square(subref-subdef))
-
-    #These indexes locate the u & v value(in the initial range we are checking through) which returned the smallest sum of differences squared.
-    u_value_index = np.argmin(np.min(sum_diff_sq, axis=1))
-    v_value_index = np.argmin(np.min(sum_diff_sq, axis=0))
-
-    q_0[0] = u_check[u_value_index]
-    q_0[1] = v_check[v_value_index]
-
-    return q_0[0:6]
-
-def fit_spline(ref_img, def_img, spline_order):
-
-    # Obtain the size of the reference image
-    Y_size, X_size,tmp = ref_img.shape
-
-    # Define the deformed image's coordinates
-    X_defcoord = np.arange(0, X_size, dtype=int) # Maybe zero?
-    Y_defcoord = np.arange(0, Y_size, dtype=int)
-
-    #Fit spline
-    def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, def_img[:,:,0], kx=spline_order-1, ky=spline_order-1)
-    #why subtract 1 from spline order?
-
-    #Evaluate derivatives at coordinates
-    def_interp_x = def_interp(X_defcoord, Y_defcoord, 0, 1)
-    def_interp_y = def_interp(X_defcoord, Y_defcoord, 1, 0)
-
-    return def_interp, def_interp_x, def_interp_y
-
 
 def DIC_NR_images(ref_img=None,def_img=None,subset_size=None,ini_guess=None,*args,**kwargs):
 

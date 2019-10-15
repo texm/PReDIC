@@ -3,18 +3,12 @@ PARENT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../"
 sys.path.append(PARENT_DIR)
 TEST_IMAGE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/testing_images/"
 
-from deformation_measurement import DeformationMeasurer
-from deformation_measurement import DIC_NR_images
-from deformation_measurement import C_First_Order
-
 from deformation_measurement.DIC_NR_images import *
 from deformation_measurement.C_First_Order import *
-#from test_generated import generate_images
 
 import numpy as np
 from PIL import Image
 from scipy.interpolate import splrep, PPoly, RectBivariateSpline, BSpline, BPoly, bisplev, bisplrep, splder
-
 
 class TestFunctions(unittest.TestCase):
 	
@@ -128,37 +122,6 @@ class TestFunctions(unittest.TestCase):
 		print(X)
 		print(Y)
 
-    
-
-class TestCase(unittest.TestCase):
-#	def setUp(self):
-#		self.dm = DeformationMeasurer()
-
-
-	def test_import_successful(self):
-		self.assertTrue(self.dm is not None)
-
-	def test_interpolation(self):
-		test_image_1 = np.array(Image.open("test_image_1.bmp").convert('LA')) # numpy.array
-
-	'''
-	def test_DIC_NR_images(self):
-		matlab_output = [] # open csv file of matlab results
-		python_output = self.dm.DIC_NR_images("ref50.bmp", "def50.bmp", 7, [0, 0])
-		self.assertEqual(python_output, matlab_output)
-
-	# cant really test without ^ finished
-	def test_C_First_Order(self):
-		matlab_output = (0.0, 0.0, 0.0) # save matlab results as json or something?
-		python_output = matlab_output #self.dm.C_First_Order([0, 0, 0])
-		self.assertEqual(python_output, matlab_output)
-	'''
-	'''
-	def test_generated_images(self):
-		ref_i, def_i = generate_images()
-		self.assertIsNotNone(ref_i)
-		self.assertIsNotNone(def_i)
-	'''
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
     with open(f"compact_{fname}.csv", 'w+') as fh:
