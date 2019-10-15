@@ -6,7 +6,7 @@ from PIL import Image
 from scipy.interpolate import RectBivariateSpline
 
 class DIC_NR:
-    def __init__(self, ref_img=None, def_img=None, subsetSize=None, ini_guess=None, *args, **kwargs):
+    def __init__(self, ref_img, def_img, subsetSize, ini_guess, *args, **kwargs):
         # Initialize variables
         self.subset_size = subsetSize
         self.spline_order = 6
@@ -53,6 +53,8 @@ class DIC_NR:
 
         self.initial_guess()
         self.fit_spline()
+
+        self.cfo = C_First_Order(self.subset_size, self.ref_image, self.def_interp, self.def_interp_x, self.def_interp_y)
 
     def initial_guess(self, ref_img=None, def_img=None):
         if type(ref_img) == type(None) or type(def_img) == type(None):
@@ -153,13 +155,13 @@ class DIC_NR:
                 self.Yp = yy + 1
                 #t_tmp = toc
 
-                _G = self.create_globals()
+                #_G = self.create_globals()
 
                 # __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
                 # if (itr_skip == 0)
                 # Initialize some values
                 n = 0
-                C_last, GRAD_last, HESS = C_First_Order(self.q_k, _G) # q_k was the result from last point or the user's guess
+                C_last, GRAD_last, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # q_k was the result from last point or the user's guess
                 optim_completed = False
 
                 if np.isnan(abs(np.mean(np.mean(HESS)))):
@@ -169,7 +171,7 @@ class DIC_NR:
                     # Compute the next guess and update the values
                     delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
                     self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
-                    C, GRAD, HESS = C_First_Order(self.q_k, _G) # Compute new values
+                    C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
                     
                     # Add one to the iteration counter
                     n = n + 1 # Keep track of the number of iterations
