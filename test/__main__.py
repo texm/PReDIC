@@ -116,6 +116,9 @@ class TestFunctions(unittest.TestCase):
 		print(X)
 		print(Y)'''
 
+	def test_call(self):
+		print("hello")
+
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
     with open(f"compact_{fname}.csv", 'w+') as fh:
