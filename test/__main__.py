@@ -135,15 +135,9 @@ class TestFunctions(unittest.TestCase):
 		print(result3)
 
 	def test_define_deformed_subset(self):
-<<<<<<< HEAD
-
-		i, j, I_matrix, J_matrix, N, I, J, X, Y, f, t = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
-		
-=======
 		#TODO: use the updated class version
 		#i, j, I_matrix, J_matrix, N, I, J, X, Y = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
 		'''
->>>>>>> 8a25b05612c72e1c9ad08a8d20594476c94db769
 		print(i)
 		print(j)
 		print(I_matrix)
@@ -155,6 +149,54 @@ class TestFunctions(unittest.TestCase):
 		print(J.shape)
 		print(X)
 		print(Y)
+		'''
+
+	def test_something(self):
+		
+		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
+		test_image_1 = test_image_1.astype('d')
+
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+		def_img = np.roll(ref_img.copy(), 1, axis = 1)
+
+		print("ref image:")
+		print(ref_img[15:26,15:26,0])
+
+		print("def image:")
+		print(def_img[15:26,16:27,0])
+
+		dic = DIC_NR(ref_img, def_img, 11, [0,0])
+		dic.initial_guess()
+		dic.fit_spline()
+
+		print(dic.q_k)
+		print(dic.Xp)
+		print(dic.Yp)
+
+		output = dic.calculate()
+
+		#c_last, grad_last, hess = dic.cfo.calculate(dic.q_k, dic.Xp, dic.Yp)
+
+		print(output[20,20,0])
+		print(output[20,20,1])
+		#print(grad_last)
+		#print(hess)
+		
+
+		dic_2 = DIC_NR("ref50.bmp","def50.bmp",11,[0,0])
+		dic_2.initial_guess()
+		dic_2.fit_spline()
+
+		output_2 = dic_2.calculate()
+		print("other")
+		print(output_2[20:30,20:30,0])
+		print(output_2[20:30,20:30,1])
+
+		x,y,z = output_2.shape
+		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
+
+		savetxt_compact("output",sav)
 		
 
 	def test_whole(self):

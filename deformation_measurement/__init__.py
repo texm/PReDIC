@@ -18,9 +18,13 @@ class DIC_NR:
 		if (self.subset_size % 2 == 0):
 			raise ValueError("Subset size must be odd")
 
-		# Prepare for trouble (load images) (default directory is current working directory) https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python
-		self.ref_image = np.array(Image.open(ref_img).convert('LA')) # numpy.array
-		self.def_image = np.array(Image.open(def_img).convert('LA')) # numpy.array
+		#Prepare for trouble (load images) (default directory is current working directory) https://stackoverflow.com/questions/12201577/how-can-i-convert-an-rgb-image-into-grayscale-in-python           
+		if type(ref_img) == type("s") or type(def_img) == type("s"):
+			ref_img = np.array(Image.open(ref_img).convert('LA')) # numpy.array
+			def_img = np.array(Image.open(def_img).convert('LA')) # numpy.array    
+
+		self.ref_image = ref_img
+		self.def_image = def_img
 
 		# Make it double
 		self.ref_image = self.ref_image.astype('d') # convert to double
@@ -45,12 +49,15 @@ class DIC_NR:
 		self.Xmin = ceil((self.subset_size/2) + 15) -1
 		self.Ymin = self.Xmin
 
-		self.Xmax = ceil(self.X_size-((self.subset_size/2) + 15)) - 1
-		self.Ymax = ceil(self.Y_size-((self.subset_size/2) + 15)) - 1
+		self.Xmax = self.X_size-(ceil((self.subset_size/2)+ 15) - 1)
+		self.Ymax = self.Y_size-(ceil((self.subset_size/2) + 15) - 1)
+		#print(self.Ymax)
 		self.Xp = self.Xmin
 		self.Yp = self.Ymin
 
 		if ( (self.Xp < self.Xmin) or (self.Yp < self.Ymin) or (self.Xp > self.Xmax) or  (self.Yp > self.Ymax) ):
+			#print(self.Xp)
+			#print(self.Yp)
 			raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ')
 
 		self.initial_guess()
@@ -132,7 +139,7 @@ class DIC_NR:
 
 
 	def calculate(self):
-		DEFORMATION_PARAMETERS = np.zeros_like([], shape=(self.Y_size, self.X_size, 12))
+		DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)#dunno why shape wont work for me, shape=(self.Y_size, self.X_size, 12))
 
 		calc_start_time = datetime.now()
 
@@ -142,8 +149,8 @@ class DIC_NR:
 
 			for xx in range(self.Xmin, self.Xmax + 1):
 				#Points for correlation and initializaing the q matrix
-				self.Xp = xx + 1
-				self.Yp = yy + 1
+				self.Xp = xx
+				self.Yp = yy
 
 				start = datetime.now() - calc_start_time
 
@@ -159,7 +166,8 @@ class DIC_NR:
 
 				while not optim_completed:
 					# Compute the next guess and update the values
-					delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
+					delta_q = np.negative(np.matmul(np.linalg.inv(HESS),GRAD_last))#lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
+					print(delta_q)
 					self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
 					C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
 					
@@ -167,7 +175,7 @@ class DIC_NR:
 					n = n + 1 # Keep track of the number of iterations
 
 					# Check to see if the values have converged according to the stopping criteria
-					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
+					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q) < self.TOL[1])): #needs to be tested...#FIXXX
 						optim_completed = True
 					
 					C_last = C #Save the C value for comparison in the next iteration
@@ -193,8 +201,8 @@ class DIC_NR:
 				DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
 				DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
 
-			print(yy)
-			print(xx)
+			#print(yy)
+			#print(xx)
 
 
 		'''

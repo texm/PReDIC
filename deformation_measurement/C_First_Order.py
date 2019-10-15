@@ -44,16 +44,47 @@ class C_First_Order(object):
 		self.X = Xp + u + self.I + np.multiply(self.I, du_dx) + np.multiply(self.J, du_dy)
 		self.Y = Yp + v + self.J + np.multiply(self.J, dv_dy) + np.multiply(self.I, dv_dx)
 
+		#print("X,Y coords to check on spline")
+		#print(self.X)
+		#print(self.Y)
+
+		#Check reason for this
+		#self.X = np.subtract(self.X,1)
+		#self.Y = np.subtract(self.Y,1)
+
 	def calculate(self, q, Xp, Yp, nargout=3):
 		C = 0.0
 		GRAD = 0.0
 		HESS = 0.0
 
+		half_subset = floor(self.subset_size / 2)
+
 		self.define_deformed_subset(q, Xp, Yp)
 
-		f = np.reshape(self.ref_image[(Yp + self.J_matrix - 1), (Xp + self.I_matrix - 1), 0], (1, self.N), 'F')
-		
-		t = self.def_interp.ev(self.X, self.Y)
+		#print(self.def_interp.ev(15,16))
+
+		g = self.def_interp.ev(self.Y, self.X)
+		g = np.reshape(g, (self.subset_size, self.subset_size))
+		#print("g:")
+		#print(g)
+		#g = np.transpose(g)
+		#print("g transpose:")
+		#print(g)
+		g = g.flatten()
+
+		y0 = Yp - half_subset
+		y1 = Yp + half_subset+1
+
+		x0 = Xp - half_subset
+		x1 = Xp + half_subset+1
+
+		reference_subset = self.ref_image[y0:y1, x0:x1, 0]
+		#print("reference_subset")
+		#print(reference_subset)
+		f = reference_subset.flatten()
+		#f = np.reshape(self.ref_image[(Yp + self.J_matrix - 1), (Xp + self.I_matrix - 1), 0], (1, self.N), 'F')
+
+		'''
 		g = np.zeros_like(t)
 		tmp = 0
 		for first_index in range(1, self.subset_size+1):
@@ -62,15 +93,23 @@ class C_First_Order(object):
 				tmp+=1
 
 		temp = (f-g)
-
+		'''
 		SS_f_g = np.sum(np.sum(np.square((f-g))))
 		SS_f_sq = np.sum(np.sum(np.square(f)))
 
 		C = np.divide(SS_f_g, SS_f_sq)
 
 		if nargout > 1:
-			dg_dX = self.ev_concatenate(0, 1)
-			dg_dY = self.ev_concatenate(1, 0)
+			a = self.def_interp.ev(self.Y, self.X, 0, 1)
+			a = np.reshape(a, (self.subset_size, self.subset_size))
+			dg_dX = a.flatten()
+
+			b = self.def_interp.ev(self.Y, self.X, 1, 0)
+			b = np.reshape(b, (self.subset_size, self.subset_size))
+			dg_dY = b.flatten()
+
+			#dg_dX = self.ev_concatenate(0, 1)
+			#dg_dY = self.ev_concatenate(1, 0)
 
 			dX_du = 1
 			dX_dv = 0
