@@ -1,8 +1,6 @@
 from math import floor
 import numpy as np
 import scipy as sp
-import deformation_measurement.Globs as Globs
-#import Globs
 
 def ev_concatenate(def_interp, X,Y,subset_size, xd=0, yd=0):
 	N = subset_size * subset_size
@@ -32,7 +30,7 @@ def define_deformed_subset(subset_size, Xp, Yp, u, v, du_dx, du_dy, dv_dx, dv_dy
 	return i, j, I_matrix, J_matrix, N, I, J, X, Y
 
 
-def C_First_Order(q, nargout=3):
+def C_First_Order(q, _G, nargout=3):
 
 	C = 0.0
 	GRAD = 0.0
@@ -45,13 +43,13 @@ def C_First_Order(q, nargout=3):
 	du_dy       = q[4]
 	dv_dx       = q[5]
 
-	subset_size = Globs.subset_size
-	ref_image = Globs.ref_image
-	Xp = Globs.Xp
-	Yp = Globs.Yp
-	def_interp = Globs.def_interp
-	def_interp_x = Globs.def_interp_x
-	def_interp_y = Globs.def_interp_y
+	subset_size = _G["subset_size"]
+	ref_image = _G["ref_image"]
+	Xp = _G["Xp"]
+	Yp = _G["Yp"]
+	def_interp = _G["def_interp"]
+	def_interp_x = _G["def_interp_x"]
+	def_interp_y = _G["def_interp_y"]
 
 	i = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
 	j = np.arange(-floor(subset_size/2), floor(subset_size/2)+1, dtype=int)
