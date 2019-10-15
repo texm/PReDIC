@@ -4,7 +4,7 @@ sys.path.append(PARENT_DIR)
 TEST_IMAGE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/testing_images/"
 
 from deformation_measurement import DIC_NR
-from deformation_measurement.C_First_Order import *
+from deformation_measurement.C_First_Order import C_First_Order
 
 import numpy as np
 from PIL import Image
@@ -135,9 +135,15 @@ class TestFunctions(unittest.TestCase):
 		print(result3)
 
 	def test_define_deformed_subset(self):
+<<<<<<< HEAD
 
 		i, j, I_matrix, J_matrix, N, I, J, X, Y, f, t = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
 		
+=======
+		#TODO: use the updated class version
+		#i, j, I_matrix, J_matrix, N, I, J, X, Y = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
+		'''
+>>>>>>> 8a25b05612c72e1c9ad08a8d20594476c94db769
 		print(i)
 		print(j)
 		print(I_matrix)
@@ -152,13 +158,25 @@ class TestFunctions(unittest.TestCase):
 		
 
 	def test_whole(self):
-		pass
+		dic = DIC_NR("ref50.bmp", "def50.bmp", 7, [0, 0])
+		print("Not running whole calculation")
+		'''result = dic.calculate()
+		x,y,z = result.shape
+		sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
+
+		savetxt_compact("output", sav)'''
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
-    with open(f"compact_{fname}.csv", 'w+') as fh:
-        for row in x:
-            line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-            fh.write(line + '\n')
+	with open(f"compact_{fname}.csv", 'w+') as fh:
+		for row in x:
+			line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+			fh.write(line + '\n')
+
+def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
+	with open(f"matlab_{fname}.csv", 'w+') as fh:
+		for row in x:
+			line = delimiter.join("0" if value == 0 else fmt % value for value in row)
+			fh.write(line + '\n')
 
 if __name__ == '__main__':
 	unittest.main()
