@@ -1,6 +1,8 @@
 from .C_First_Order import C_First_Order
 
 from math import floor, ceil
+from datetime import datetime
+
 import numpy as np
 from PIL import Image
 from scipy.interpolate import RectBivariateSpline
@@ -129,21 +131,10 @@ class DIC_NR:
 		self.def_interp_y = self.def_interp(X_defcoord, Y_defcoord, 1, 0)
 
 
-	def create_globals(self):
-		return {
-			"subset_size":  self.subset_size,
-			"ref_image":    self.ref_image,
-			"def_image":    self.def_image,
-			"def_interp":   self.def_interp,
-			"def_interp_x": self.def_interp_x,
-			"def_interp_y": self.def_interp_y,
-			"Xp":           self.Xp,
-			"Yp":           self.Yp
-		}
-
-
 	def calculate(self):
 		DEFORMATION_PARAMETERS = np.zeros_like([], shape=(self.Y_size, self.X_size, 12))
+
+		calc_start_time = datetime.now()
 
 		for yy in range(self.Ymin, self.Ymax + 1):
 			if yy > self.Ymin:
@@ -153,9 +144,8 @@ class DIC_NR:
 				#Points for correlation and initializaing the q matrix
 				self.Xp = xx + 1
 				self.Yp = yy + 1
-				#t_tmp = toc
 
-				#_G = self.create_globals()
+				start = datetime.now() - calc_start_time
 
 				# __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
 				# if (itr_skip == 0)
@@ -183,7 +173,7 @@ class DIC_NR:
 					C_last = C #Save the C value for comparison in the next iteration
 					GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
 				#_________________________________________________________________________
-				#t_optim = toc - t_tmp
+				end = (datetime.now() - calc_start_time) - start
 
 				#_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
 				# Store the current displacements
@@ -200,8 +190,8 @@ class DIC_NR:
 				DEFORMATION_PARAMETERS[yy,xx,8]  = self.Yp
 
 				DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
-				DEFORMATION_PARAMETERS[yy,xx,10] = 0 #t_tmp # time of spline process
-				DEFORMATION_PARAMETERS[yy,xx,11] = 0 #t_optim # time of optimization process
+				DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
+				DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
 
 			print(yy)
 			print(xx)

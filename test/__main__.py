@@ -131,7 +131,6 @@ class TestFunctions(unittest.TestCase):
 	def test_whole(self):
 		dic = DIC_NR("ref50.bmp", "def50.bmp", 7, [0, 0])
 		result = dic.calculate()
-		print(result)
 		x,y,z = result.shape
 		sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
 
