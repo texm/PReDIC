@@ -1,24 +1,34 @@
 import sys, os, unittest
 PARENT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../"
 sys.path.append(PARENT_DIR)
-
 TEST_IMAGE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/testing_images/"
+
+from deformation_measurement import DeformationMeasurer
+from deformation_measurement import DIC_NR_images
+from deformation_measurement import C_First_Order
 
 from deformation_measurement.DIC_NR_images import *
 from deformation_measurement.C_First_Order import *
+#from test_generated import generate_images
 
 import numpy as np
 from PIL import Image
 from scipy.interpolate import splrep, PPoly, RectBivariateSpline, BSpline, BPoly, bisplev, bisplrep, splder
 
+
 class TestFunctions(unittest.TestCase):
+	
+	#For quite a few of these tests I have set them up with subset size 11
+	#In the case where the image is 40x40, this means Xmin,Ymin,Xp,Yp,Xmax & Ymax should all be 20
 	def test_interpolation(self):
+		#old testing, look to below functions for testing of actual code
+
 		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
 		print(test_image_1.shape)
-		#print(test_image_1)
+		print(test_image_1)
 		test_image_b = test_image_1.astype('d')
 		print(test_image_b.shape)
-		#print(test_image_b)
+		print(test_image_b)
 
 		X_size, Y_size, _tmp= test_image_b.shape
 		print(X_size, Y_size, _tmp)
@@ -27,7 +37,7 @@ class TestFunctions(unittest.TestCase):
 		col2 = test_image_b[49,0,0]
 
 		test_image_c = test_image_b[:,:,0]
-		#print(test_image_c)
+		print(test_image_c)
 
 		Y_size, X_size,tmp = test_image_b.shape
 
@@ -55,31 +65,31 @@ class TestFunctions(unittest.TestCase):
 		print(col1)
 		print(col2)
 
-
 	def test_initial_guess(self):
+
 		#TEST 1
 		#moving "image" all to right by 1, u = 1, v = 0
+		#check the logic that u & v are indexed correctly
 		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
 		ref_img = np.insert(ref_img, 1, 0, axis = 2)
 		def_img = np.roll(ref_img.copy(), 1, axis = 1)
 
-		q_k = initial_guess(ref_img, def_img, [0,0], 11, 20, 20)
+		dicr_1 = DIC_NR("ref50.bmp", "ref50.bmp", 11, [0,0])
+		dicr_1.initial_guess(ref_img, def_img, [0,0], 11, 20, 20)
 
-		self.assertEqual(q_k[0],1)
-		self.assertEqual(q_k[1],0)
+		self.assertEqual(dicr_1.q_k[0],1)
+		self.assertEqual(dicr_1.q_k[1],0)
 
 		#TEST 2
 		#comparing the same image with itself, u & v should equal 0
-		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
-		test_image_1 = test_image_1.astype('d')
+		dicr = DIC_NR("ref50.bmp", "ref50.bmp", 11, [0,0])
+		dicr.initial_guess(dicr.ref_image, dicr.ref_image, dicr.ini_guess, dicr.subset_size, dicr.Xp, dicr.Yp)
 
-		q_k = initial_guess(test_image_1, test_image_1, [0,0], 11, 20, 20)
-
-		self.assertEqual(q_k[0], 0)
-		self.assertEqual(q_k[1], 0)
-
+		self.assertEqual(dicr.q_k[0], 0)
+		self.assertEqual(dicr.q_k[1], 0)
 
 	def test_fit_spline(self):
+
 		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
 		test_image_1 = test_image_1.astype('d')
 
@@ -87,10 +97,12 @@ class TestFunctions(unittest.TestCase):
 		actual_val_49_0 = test_image_1[49,0,0]
 
 		#Note: this is using same image as ref and def
-		interp, interp_x, interp_y = fit_spline(test_image_1, test_image_1, 5)
-		result1 = interp.ev(48,0)
-		result2 = interp.ev(48.5,0)
-		result3 = interp.ev(49,0)
+		dicnr = DIC_NR("ref50.bmp", "ref50.bmp", 11, [0,0])
+		dicnr.fit_spline(test_image_1, test_image_1, 5)
+
+		result1 = dicnr.def_interp.ev(48,0)
+		result2 = dicnr.def_interp.ev(48.5,0)
+		result3 = dicnr.def_interp.ev(49,0)
 
 		print("Actual values at x? 48,49 y:0")
 		print(actual_val_48_0)
@@ -101,10 +113,10 @@ class TestFunctions(unittest.TestCase):
 		print(result2)
 		print(result3)
 
-
 	def test_define_deformed_subset(self):
+
 		i, j, I_matrix, J_matrix, N, I, J, X, Y = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
-		'''print(i)
+		print(i)
 		print(j)
 		print(I_matrix)
 		print(J_matrix)
@@ -114,8 +126,39 @@ class TestFunctions(unittest.TestCase):
 		print(J)
 		print(J.shape)
 		print(X)
-		print(Y)'''
+		print(Y)
 
+    
+
+class TestCase(unittest.TestCase):
+#	def setUp(self):
+#		self.dm = DeformationMeasurer()
+
+
+	def test_import_successful(self):
+		self.assertTrue(self.dm is not None)
+
+	def test_interpolation(self):
+		test_image_1 = np.array(Image.open("test_image_1.bmp").convert('LA')) # numpy.array
+
+	'''
+	def test_DIC_NR_images(self):
+		matlab_output = [] # open csv file of matlab results
+		python_output = self.dm.DIC_NR_images("ref50.bmp", "def50.bmp", 7, [0, 0])
+		self.assertEqual(python_output, matlab_output)
+
+	# cant really test without ^ finished
+	def test_C_First_Order(self):
+		matlab_output = (0.0, 0.0, 0.0) # save matlab results as json or something?
+		python_output = matlab_output #self.dm.C_First_Order([0, 0, 0])
+		self.assertEqual(python_output, matlab_output)
+	'''
+	'''
+	def test_generated_images(self):
+		ref_i, def_i = generate_images()
+		self.assertIsNotNone(ref_i)
+		self.assertIsNotNone(def_i)
+	'''
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
     with open(f"compact_{fname}.csv", 'w+') as fh:
