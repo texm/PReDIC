@@ -166,7 +166,8 @@ class DIC_NR:
 
 				while not optim_completed:
 					# Compute the next guess and update the values
-					delta_q = np.negative(np.matmul(np.linalg.inv(HESS),GRAD_last))#lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
+					#delta_q = np.negative(np.matmul(np.linalg.inv(HESS),GRAD_last))
+					delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
 					print(delta_q)
 					self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
 					C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
@@ -175,7 +176,7 @@ class DIC_NR:
 					n = n + 1 # Keep track of the number of iterations
 
 					# Check to see if the values have converged according to the stopping criteria
-					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q) < self.TOL[1])): #needs to be tested...#FIXXX
+					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
 						optim_completed = True
 					
 					C_last = C #Save the C value for comparison in the next iteration

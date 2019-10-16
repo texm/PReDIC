@@ -178,20 +178,28 @@ class TestFunctions(unittest.TestCase):
 
 		#c_last, grad_last, hess = dic.cfo.calculate(dic.q_k, dic.Xp, dic.Yp)
 
-		print(output[20,20,0])
-		print(output[20,20,1])
-		#print(grad_last)
-		#print(hess)
+		#print(output[20,20,0])
+		#print(output[20,20,1])
+		'''
+		print("C")
+		print(c_last)
+		print("grad")
+		print(grad_last)
+		print("hess")
+		print(hess)
+		'''
 		
-
+		
 		dic_2 = DIC_NR("ref50.bmp","def50.bmp",11,[0,0])
 		dic_2.initial_guess()
 		dic_2.fit_spline()
 
+		#c_last_2, grad_last_2, hess_2 = dic_2.cfo.calculate(dic_2.q_k, dic_2.Xp, dic_2.Yp)
+		
 		output_2 = dic_2.calculate()
-		print("other")
-		print(output_2[20:30,20:30,0])
-		print(output_2[20:30,20:30,1])
+		#print("other")
+		#print(output_2[20:30,20:30,0])
+		#print(output_2[20:30,20:30,1])
 
 		x,y,z = output_2.shape
 		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
