@@ -1,66 +1,152 @@
 import sys
 import numpy as np
-from scipy.interpolate import griddata
 from PIL import Image
 from math import *
 
-def test():
-	for arg in sys.argv:
-		print(arg)
+import os
+import math
+import cairo
 
-	Deformation_generation(sys.argv[1])
+#Requires pycairo & pkg-config
+#Refer here: https://pycairo.readthedocs.io/en/latest/getting_started.html
 
-def Deformation_generation(ref_img):
-	#open image
-	im = Image.open("Reference_images/" + str(ref_img))
-	im.resize((50,50))
-	width, height = im.size
+#Matrix transforms used for deformations
+#[a1, c3, e5,
+# b2, d4, f6,
+# 0, 0, 1] these numbers relate to the .Matrix(1,2,3,4,5,6) variables
 
-	#convert to array
-	im_array = np.array(im)
+# x' = a1*x + c3*y + e5
+# y' = d4*y + b2*x + f6
 
-	#we transform these to get coordinates of where the pixel data will be in the second image
-	#grid_y is y coord, grid_x is x coord
-	#note: these are indexed from the upper left corner of the image
-	grid_y,grid_x = np.mgrid[0:height, 0:width]
+# (a1&d4):provide scale
+# (c3&b2):provide shear
+# (ef+f6):provide translation
 
-	#transform y & x coord according to some function
-	trans_y = grid_y*2
-	trans_x = grid_x*2
+def generate_images(image_size,seed,a1,b2,c3,d4,e5,f6):
+	gen_ref(image_size, seed)
+	gen_def(image_size, seed, a1,b2,c3,d4,e5,f6)
+	xd,yd = calc_translations(image_size,a1,b2,c3,d4,e5,f6)
+	#print(xd,yd)
 
-	#reshape to combine into (x,y) pairs
-	flat_y = np.reshape(trans_y, width*height)
-	flat_x = np.reshape(trans_x, width*height)
 
-	#x & y coordinates of data points after they have been transformed
-	coords = np.vstack((flat_y,flat_x)).T
+def draw_speckles(context, seed):
 
-	#associated pixel data point for each coordinate
-	values = np.reshape(im_array, width*height)
+	#Create white background
+	context.set_source_rgb(1, 1, 1)
+	context.rectangle(0, 0, 1, 1)  # Rectangle(x0, y0, x1, y1)
+	context.fill()
 
-	#interpolate image based on transformed coords and pixel data
-	#this places pixel data in 'values' at the coordinate in 'coords', the values in grid_x and grid_y are then calculated by interpolation.
-	grid = griddata(coords,values,(grid_x, grid_y),method = 'linear')
+	#Change colour to black
+	context.set_source_rgb(0,0,0)
+	context.move_to(0, 0)
 
-	#calculate the displacements
-	y_disp = trans_y - grid_y
-	x_disp = trans_x - grid_x
+	size = 1500 # The number of speckles
 
-	#save displacements to file
-	np.savetxt("x_disp.csv", x_disp, delimiter=",")
-	np.savetxt("y_disp.csv", y_disp, delimiter=",")
+	# To make the images the same each time (turn this off to generate more images)
+	np.random.seed(seed= seed)
+	min = 0
+	max = 1
 
-	#display deformed image
-	#should check saving format ***
-	out = Image.fromarray(grid).convert('L')
-	out.save('Deformed_images/def250.bmp')
+	# Use a uniform random distribution
+	initial_x = np.random.uniform(min, max, size)
+	initial_y = np.random.uniform(min, max, size)
+
+	for i in range(size):
+		#circle (xc, yc, radius, start_angle, end_angle)
+		context.arc(initial_x[i], initial_y[i], 0.01, 0, 2*math.pi)
+		context.fill()
+
+def calc_translations(image_size,a1,b2,c3,d4,e5,f6):
+
+	trans_matrix = [[a1,c3],[b2,d4]]
+
+	orig_x, orig_y = np.mgrid[0:image_size,0:image_size]
+
+	xy_points = np.mgrid[0:image_size,0:image_size].reshape((2,image_size*image_size))
+
+	new_points = np.linalg.inv(trans_matrix).dot(xy_points)#.astype(float)
+
+	x, y = new_points.reshape((2,image_size,image_size))
+
+	x = np.add(x, e5).reshape((image_size,image_size))
+
+	y = np.add(y, f6).reshape((image_size,image_size))
+
+	xd = np.transpose(x - orig_x)
+	yd = np.transpose(y - orig_y)
+
+	return xd,yd	
+
+def gen_ref(image_size, seed):
+	WIDTH, HEIGHT = image_size, image_size
+
+	surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
+	context = cairo.Context(surface)
+
+	context.scale(WIDTH, HEIGHT)  # Normalizing the canvas
+
+	draw_speckles(context, seed)
+
+	context.close_path()
+
+	img_name = "ref_" + str(image_size) + "_" + str(seed) + ".bmp"
+
+	write_image(surface, image_size, img_name)
+
+def gen_def(image_size, seed, a1,b2,c3,d4,e5,f6):
+	WIDTH, HEIGHT = image_size, image_size
+
+	format = cairo.FORMAT_ARGB32
+
+	surface = cairo.ImageSurface(format, WIDTH, HEIGHT)
+	context = cairo.Context(surface)
+
+	# Normalizing the canvas
+	context.scale(WIDTH, HEIGHT)  
+
+	#Matrix transform
+	#[a1, c3, e5,
+	# b2, d4, f6,
+	# 0, 0, 1] these numbers relate to the .Matrix(1,2,3,4,5,6) variables
+
+	# x' = a1*x + c3*y + e5
+	# y' = d4*y + b2*x + f6
+
+	# (a1&d4):provide scale
+	# (c3&b2):provide shear
+	# (ef+f6):provide translation
+
+	mtx = cairo.Matrix(a1,b2,c3,d4,e5,f6)
+	context.transform(mtx)
+
+	draw_speckles(context, seed)
+
+	context.close_path()
+
+	img_name = "def_" + str(image_size) + "_" + str(seed) + ".bmp"
+
+	write_image(surface, image_size, img_name)
+
+def write_image(surface, image_size, file_name):
+	save_dir = os.path.dirname(os.path.realpath(__file__)) + "/img_gen"
+
+	if not os.path.exists(save_dir):
+		os.makedirs(save_dir)
+
+	buf = surface.get_data()
+	data = np.ndarray(shape=(image_size, image_size), dtype=np.uint32,buffer=buf)
+
+	out = Image.fromarray(data, 'RGBA')
 	out.show()
-
-
+	out.save(save_dir +"/"+file_name)
 
 def main():
-    print("Hello World!")
-    test()
+    generate_images(500,19,1.1, 0.0, 0.0, 1.1, 0.0, 0.0)
+
+    #for arg in sys.argv:
+	#	print(arg)
+
+	#Deformation_generation(sys.argv[1])
 
 if __name__ == "__main__":
     main()
