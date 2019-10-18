@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from PIL import Image
 from math import *
+import math
 import os
 import cairo
 
@@ -155,7 +156,7 @@ def write_image(surface, image_size, file_name):
 	out.save(save_dir +"/"+file_name)
 
 def main():
-    generate_images(500,19,1.1, 0.0, 0.0, 1, 0.0, 0.0)
+    generate_images(50,19,1.1, 0.0, 0.0, 1, 0.0, 0.0)
 
 
     #generate_images(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],sys.argv[7],sys.argv[8])
