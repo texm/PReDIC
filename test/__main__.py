@@ -152,7 +152,7 @@ class TestFunctions(unittest.TestCase):
 		'''
 
 	def test_something(self):
-		
+		'''
 		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
 		test_image_1 = test_image_1.astype('d')
 
@@ -177,7 +177,7 @@ class TestFunctions(unittest.TestCase):
 		output = dic.calculate()
 
 		#c_last, grad_last, hess = dic.cfo.calculate(dic.q_k, dic.Xp, dic.Yp)
-
+		'''
 		#print(output[20,20,0])
 		#print(output[20,20,1])
 		'''
@@ -188,7 +188,7 @@ class TestFunctions(unittest.TestCase):
 		print("hess")
 		print(hess)
 		'''
-		
+
 		
 		dic_2 = DIC_NR("ref50.bmp","def50.bmp",11,[0,0])
 		dic_2.initial_guess()
@@ -198,8 +198,8 @@ class TestFunctions(unittest.TestCase):
 		
 		output_2 = dic_2.calculate()
 		#print("other")
-		#print(output_2[20:30,20:30,0])
-		#print(output_2[20:30,20:30,1])
+		print(output_2[20:30,20:30,0])
+		print(output_2[20:30,20:30,1])
 
 		x,y,z = output_2.shape
 		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
@@ -215,6 +215,21 @@ class TestFunctions(unittest.TestCase):
 		sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
 
 		savetxt_compact("output", sav)'''
+
+	def test_gen(self):
+		#test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "def_500_19.bmp").convert('LA')) # numpy.array#
+		#test_image_1 = test_image_1.astype('d')
+		#print(test_image_1)
+
+		dic = DIC_NR("ref_500_19.bmp", "def_500_19.bmp", 11, [0,0])
+		dic.initial_guess()
+		dic.fit_spline()
+		output = dic.calculate()
+
+		x,y,z = output.shape
+		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
+
+		savetxt_compact("output",sav)
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
 	with open(f"compact_{fname}.csv", 'w+') as fh:

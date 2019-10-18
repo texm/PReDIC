@@ -2,13 +2,17 @@ import sys
 import numpy as np
 from PIL import Image
 from math import *
-
 import os
-import math
 import cairo
 
 #Requires pycairo & pkg-config
 #Refer here: https://pycairo.readthedocs.io/en/latest/getting_started.html
+
+#These functions allow for the generation of speckle images.
+#Images are generated via the use of a vector graphics library pycairo.
+#This allows for image transformations without the need for interpolation or resampling error consideration.
+#Precision necessary when measuring accuracy of DIC algorithm to sub-pixel level. 
+#The x and y displacements can then be calculated precisely according to the transformation.
 
 #Matrix transforms used for deformations
 #[a1, c3, e5,
@@ -22,13 +26,15 @@ import cairo
 # (c3&b2):provide shear
 # (ef+f6):provide translation
 
+
+#Function will generate reference image, deformed image and provide x&y translation arrays
 def generate_images(image_size,seed,a1,b2,c3,d4,e5,f6):
 	gen_ref(image_size, seed)
 	gen_def(image_size, seed, a1,b2,c3,d4,e5,f6)
 	xd,yd = calc_translations(image_size,a1,b2,c3,d4,e5,f6)
-	#print(xd,yd)
+	print(xd,yd)
 
-
+#Will draw speckles using uniform random distribution, change seed for different speckle pattern
 def draw_speckles(context, seed):
 
 	#Create white background
@@ -40,9 +46,9 @@ def draw_speckles(context, seed):
 	context.set_source_rgb(0,0,0)
 	context.move_to(0, 0)
 
-	size = 1500 # The number of speckles
+	size = 3000 # The number of speckles
 
-	# To make the images the same each time (turn this off to generate more images)
+	# To make the images the same each time (matching ref & def)
 	np.random.seed(seed= seed)
 	min = 0
 	max = 1
@@ -56,27 +62,34 @@ def draw_speckles(context, seed):
 		context.arc(initial_x[i], initial_y[i], 0.01, 0, 2*math.pi)
 		context.fill()
 
+#Calculates x and y displacements between reference image and deformed image, according to transformation matrix
 def calc_translations(image_size,a1,b2,c3,d4,e5,f6):
 
+	#create transformation matrix
 	trans_matrix = [[a1,c3],[b2,d4]]
 
-	orig_x, orig_y = np.mgrid[0:image_size,0:image_size]
+	#original x and y coordinates
+	orig_y, orig_x = np.mgrid[1:image_size + 1,1:image_size+1]
 
-	xy_points = np.mgrid[0:image_size,0:image_size].reshape((2,image_size*image_size))
+	#x,y pairs to be transformed
+	xy_points = np.mgrid[1:image_size + 1,1:image_size + 1].reshape((2,image_size*image_size))
+	xy_points[[1,0]] = xy_points[[0,1]]
 
-	new_points = np.linalg.inv(trans_matrix).dot(xy_points)#.astype(float)
-
+	#transformed x,y pairs
+	new_points = np.dot(trans_matrix,xy_points)
 	x, y = new_points.reshape((2,image_size,image_size))
 
+	#add translation element of matrix
 	x = np.add(x, e5).reshape((image_size,image_size))
-
 	y = np.add(y, f6).reshape((image_size,image_size))
 
-	xd = np.transpose(x - orig_x)
-	yd = np.transpose(y - orig_y)
+	#calculate the x and y displacements
+	xd = (x - orig_x)
+	yd = (y - orig_y)
 
 	return xd,yd	
 
+#Generate reference images
 def gen_ref(image_size, seed):
 	WIDTH, HEIGHT = image_size, image_size
 
@@ -93,6 +106,7 @@ def gen_ref(image_size, seed):
 
 	write_image(surface, image_size, img_name)
 
+#Generate deformed images
 def gen_def(image_size, seed, a1,b2,c3,d4,e5,f6):
 	WIDTH, HEIGHT = image_size, image_size
 
@@ -127,6 +141,7 @@ def gen_def(image_size, seed, a1,b2,c3,d4,e5,f6):
 
 	write_image(surface, image_size, img_name)
 
+#Writes image to /img_gen directory in format as specified by filename (currently works for .bmp)
 def write_image(surface, image_size, file_name):
 	save_dir = os.path.dirname(os.path.realpath(__file__)) + "/img_gen"
 
@@ -137,11 +152,13 @@ def write_image(surface, image_size, file_name):
 	data = np.ndarray(shape=(image_size, image_size), dtype=np.uint32,buffer=buf)
 
 	out = Image.fromarray(data, 'RGBA')
-	out.show()
 	out.save(save_dir +"/"+file_name)
 
 def main():
-    generate_images(500,19,1.1, 0.0, 0.0, 1.1, 0.0, 0.0)
+    generate_images(500,19,1.1, 0.0, 0.0, 1, 0.0, 0.0)
+
+
+    #generate_images(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],sys.argv[6],sys.argv[7],sys.argv[8])
 
     #for arg in sys.argv:
 	#	print(arg)
