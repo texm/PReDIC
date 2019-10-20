@@ -1,5 +1,5 @@
 # Maddie's Branch - DO NOT TRY TO MERGE
-A place where she uploads varius images and testing scripts as evidence that she was actually doing things for the project
+A place where she uploads various images and testing scripts as evidence that she was actually doing things for the project.
 
 ## Final uploads file:
 
