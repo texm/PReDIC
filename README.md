@@ -1,5 +1,6 @@
 # Maddie's Branch - DO NOT TRY TO MERGE
 A place where she uploads various images and testing scripts as evidence that she was actually doing things for the project.
+Note: more outputs and scripts were uploaded to our google drive as well.
 
 ## Final uploads file:
 
