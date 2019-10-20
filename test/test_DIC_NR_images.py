@@ -67,7 +67,7 @@ class Test_DIC_NR(unittest.TestCase):
 		def_img = np.roll(ref_img.copy(), 1, axis = 1)
 
 		dicr_1 = DIC_NR()
-		dicr_1.set_parameters("ref50.bmp", "def50.bmp", 11, [0,0])
+		dicr_1.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "def50.bmp", 11, [0,0])
 		dicr_1.initial_guess(ref_img, def_img)
 
 		print(dicr_1.q_k)
@@ -78,7 +78,7 @@ class Test_DIC_NR(unittest.TestCase):
 		#TEST 2
 		#comparing the same image with itself, u & v should equal 0
 		dicr = DIC_NR()
-		dicr.set_parameters("ref50.bmp", "ref50.bmp", 11, [0,0])
+		dicr.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "ref50.bmp", 11, [0,0])
 		dicr.initial_guess(ref_img, ref_img)
 
 		self.assertEqual(dicr.q_k[0], 0)
@@ -94,7 +94,7 @@ class Test_DIC_NR(unittest.TestCase):
 
 		#Note: this is using same image as ref and def
 		dicnr = DIC_NR()
-		dicnr.set_parameters("ref50.bmp", "ref50.bmp", 11, [0,0])
+		dicnr.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "ref50.bmp", 11, [0,0])
 		dicnr.fit_spline()
 
 		result1 = dicnr.def_interp.ev(48,0)
@@ -112,7 +112,7 @@ class Test_DIC_NR(unittest.TestCase):
 
 	def test_whole(self):
 		dic = DIC_NR()
-		dic.set_parameters("ref50.bmp", "def50.bmp", 7, [0, 0])
+		dic.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "def50.bmp", 7, [0, 0])
 		print("Not running whole calculation")
 		'''result = dic.calculate()
 		x,y,z = result.shape
