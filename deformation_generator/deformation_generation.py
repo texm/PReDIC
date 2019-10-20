@@ -27,7 +27,6 @@ import cairo
 # (c3&b2):provide shear
 # (ef+f6):provide translation
 
-
 #Function will generate reference image, deformed image and provide x&y translation arrays
 def generate_images(image_size,seed,a1,b2,c3,d4,e5,f6):
 	gen_ref(image_size, seed)
@@ -139,11 +138,11 @@ def gen_def(image_size, seed, a1,b2,c3,d4,e5,f6):
 	context.close_path()
 
 	img_name = "def_" + str(image_size) + "_" + str(seed) + ".bmp"
-
-	write_image(surface, image_size, img_name)
+	np_matrix = np.array([a1, c3, e5],[b2,d4,f6],[0,0,1])
+	write_image(surface, image_size, img_name, np_matrix, seed)
 
 #Writes image to /img_gen directory in format as specified by filename (currently works for .bmp)
-def write_image(surface, image_size, file_name):
+def write_image(surface, image_size, file_name, np_matrix, seed):
 	save_dir = os.path.dirname(os.path.realpath(__file__)) + "/img_gen"
 
 	if not os.path.exists(save_dir):
@@ -154,7 +153,11 @@ def write_image(surface, image_size, file_name):
 
 	out = Image.fromarray(data, 'RGBA')
 	out.save(save_dir +"/"+file_name)
-
+	with open(save_dir +"/"+file_name+"-metadata.txt", "a") as file:
+		file.write(image_size + "\n")
+		file.write(seed + "\n")
+		np.savetxt(file, np_matrix)
+	
 def main():
     generate_images(50,19,1.1, 0.0, 0.0, 1, 0.0, 0.0)
 
