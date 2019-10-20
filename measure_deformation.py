@@ -34,8 +34,8 @@ args = parser.parse_args()
 
 dic = dm.DIC_NR()
 
-if args.debug_mode:
-	dic.enable_debug()
+#if args.debug_mode:
+#	dic.enable_debug()
 
 dic.set_parameters(args.ref_image, args.def_image, args.subset_size, args.ini_guess)
 results = dic.calculate()
