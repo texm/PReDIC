@@ -2,9 +2,11 @@ from math import floor
 import numpy as np
 
 class C_First_Order(object):
-	def __init__(self, subset_size, ref_image, def_interp, def_interp_x, def_interp_y):
+	def set_image(self, ref_image, subset_size):
 		self.subset_size  = subset_size
 		self.ref_image    = ref_image
+
+	def set_splines(self, def_interp, def_interp_x, def_interp_y):
 		self.def_interp   = def_interp
 		self.def_interp_x = def_interp_x
 		self.def_interp_y = def_interp_y
