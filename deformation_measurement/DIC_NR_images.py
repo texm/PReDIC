@@ -8,9 +8,6 @@ from PIL import Image
 from scipy.interpolate import RectBivariateSpline
 
 class DIC_NR:
-	def enable_debug(self):
-		self.debug = True
-
 	def set_parameters(self, ref_img, def_img, subsetSize, ini_guess):
 		# Initialize variables
 		self.subset_size = subsetSize
@@ -200,8 +197,7 @@ class DIC_NR:
 				DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
 				DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
 
-			if self.debug:
-				print(yy)
-				print(xx)
+			#print(yy)
+			#print(xx)
 
 		return DEFORMATION_PARAMETERS
