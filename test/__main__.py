@@ -27,10 +27,10 @@ class TestFunctions(unittest.TestCase):
 		X_size, Y_size, _tmp= test_image_b.shape
 		#print(X_size, Y_size, _tmp)
 
-		col1 = test_image_b[48,0,0]
-		col2 = test_image_b[49,0,0]
+		#col1 = test_image_b[48,0,0]
+		#col2 = test_image_b[49,0,0]
 
-		test_image_c = test_image_b[:,:,0]
+		#test_image_c = test_image_b[:,:,0]
 		#print(test_image_c)
 
 		Y_size, X_size,tmp = test_image_b.shape
@@ -39,15 +39,39 @@ class TestFunctions(unittest.TestCase):
 		Y_defcoord = np.arange(0, Y_size, dtype=int)
 
 		interp = RectBivariateSpline(X_defcoord, Y_defcoord, test_image_b[:,:,0], kx=5, ky=5)
-		result1 = interp.ev(48,0)
-		result2 = interp.ev(48.5,0)
-		result3 = interp.ev(49,0)
+		#result1 = interp.ev(48,0)
+		#result2 = interp.ev(48.5,0)
+		#result3 = interp.ev(49,0)
 
 		interp_res = np.empty([50,50])
+
+		i, j, I_matrix, J_matrix, N, I, J, X, Y, f, t = define_deformed_subset( interp, 11, 21, 20, 0, 0, 0.0, 0.0, 0.0, 0.0)
+		'''
+		print(i)
+		print(j)
+		print(I_matrix)
+		print(J_matrix)
+		print(N)
+		print(I)
+		print(I.shape)
+		print(J)
+		print(J.shape)
+		print(X)
+		print(Y)
+		'''
+
+		t = np.reshape(t, (11,11))
+		t_t = np.transpose(t)
+		print(t_t)
+		#print(t_t)
+		print(t.shape)
 
 		for y in range(50):
 			for x in range(50):
 				interp_res[x][y] = interp.ev(x,y)
+
+		interp_res = np.transpose(interp_res)
+		print(interp_res[15:25, 15:25])
 
 		#savetxt_compact("image_actual", test_image_c)
 		#savetxt_compact("deform", interp_res)
@@ -127,6 +151,62 @@ class TestFunctions(unittest.TestCase):
 		print(Y)
 		'''
 
+	def test_something(self):
+		'''
+		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
+		test_image_1 = test_image_1.astype('d')
+
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+		def_img = np.roll(ref_img.copy(), 1, axis = 1)
+
+		print("ref image:")
+		print(ref_img[15:26,15:26,0])
+
+		print("def image:")
+		print(def_img[15:26,16:27,0])
+
+		dic = DIC_NR(ref_img, def_img, 11, [0,0])
+		dic.initial_guess()
+		dic.fit_spline()
+
+		print(dic.q_k)
+		print(dic.Xp)
+		print(dic.Yp)
+
+		output = dic.calculate()
+
+		#c_last, grad_last, hess = dic.cfo.calculate(dic.q_k, dic.Xp, dic.Yp)
+		'''
+		#print(output[20,20,0])
+		#print(output[20,20,1])
+		'''
+		print("C")
+		print(c_last)
+		print("grad")
+		print(grad_last)
+		print("hess")
+		print(hess)
+		'''
+
+		
+		dic_2 = DIC_NR("ref50.bmp","def50.bmp",11,[0,0])
+		dic_2.initial_guess()
+		dic_2.fit_spline()
+
+		#c_last_2, grad_last_2, hess_2 = dic_2.cfo.calculate(dic_2.q_k, dic_2.Xp, dic_2.Yp)
+		
+		output_2 = dic_2.calculate()
+		#print("other")
+		print(output_2[20:30,20:30,0])
+		print(output_2[20:30,20:30,1])
+
+		x,y,z = output_2.shape
+		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
+
+		savetxt_compact("output",sav)
+		
+
 	def test_whole(self):
 		dic = DIC_NR("ref50.bmp", "def50.bmp", 7, [0, 0])
 		print("Not running whole calculation")
@@ -135,6 +215,21 @@ class TestFunctions(unittest.TestCase):
 		sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
 
 		savetxt_compact("output", sav)'''
+
+	def test_gen(self):
+		#test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "def_500_19.bmp").convert('LA')) # numpy.array#
+		#test_image_1 = test_image_1.astype('d')
+		#print(test_image_1)
+
+		dic = DIC_NR("ref_500_19.bmp", "def_500_19.bmp", 11, [0,0])
+		dic.initial_guess()
+		dic.fit_spline()
+		output = dic.calculate()
+
+		x,y,z = output.shape
+		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
+
+		savetxt_compact("output",sav)
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
 	with open(f"compact_{fname}.csv", 'w+') as fh:

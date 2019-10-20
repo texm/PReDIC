@@ -41,19 +41,51 @@ class C_First_Order(object):
 		du_dy       = q[4]
 		dv_dx       = q[5]
 
+		#check this multuply
 		self.X = Xp + u + self.I + np.multiply(self.I, du_dx) + np.multiply(self.J, du_dy)
 		self.Y = Yp + v + self.J + np.multiply(self.J, dv_dy) + np.multiply(self.I, dv_dx)
+
+		#print("X,Y coords to check on spline")
+		#print(self.X)
+		#print(self.Y)
+
+		#Check reason for this
+		#self.X = np.subtract(self.X,1)
+		#self.Y = np.subtract(self.Y,1)
 
 	def calculate(self, q, Xp, Yp, nargout=3):
 		C = 0.0
 		GRAD = 0.0
 		HESS = 0.0
 
+		half_subset = floor(self.subset_size / 2)
+
 		self.define_deformed_subset(q, Xp, Yp)
 
-		f = np.reshape(self.ref_image[(Yp + self.J_matrix - 1), (Xp + self.I_matrix - 1), 0], (1, self.N), 'F')
-		
-		t = self.def_interp.ev(self.X, self.Y)
+		#print(self.def_interp.ev(15,16))
+
+		g = self.def_interp.ev(self.Y, self.X)
+		g = np.reshape(g, (self.subset_size, self.subset_size))
+		print("deformed subset from g:")
+		#print(g)
+		g = np.transpose(g)
+		#print("g transpose:")
+		print(g)
+		g = g.flatten()
+
+		y0 = Yp - half_subset
+		y1 = Yp + half_subset+1
+
+		x0 = Xp - half_subset
+		x1 = Xp + half_subset+1
+
+		reference_subset = self.ref_image[y0:y1, x0:x1, 0]
+		print("reference_subset")
+		print(reference_subset)
+		f = reference_subset.flatten()
+		#f = np.reshape(self.ref_image[(Yp + self.J_matrix - 1), (Xp + self.I_matrix - 1), 0], (1, self.N), 'F')
+
+		'''
 		g = np.zeros_like(t)
 		tmp = 0
 		for first_index in range(1, self.subset_size+1):
@@ -62,36 +94,66 @@ class C_First_Order(object):
 				tmp+=1
 
 		temp = (f-g)
-
+		'''
 		SS_f_g = np.sum(np.sum(np.square((f-g))))
 		SS_f_sq = np.sum(np.sum(np.square(f)))
 
 		C = np.divide(SS_f_g, SS_f_sq)
 
 		if nargout > 1:
-			dg_dX = self.ev_concatenate(0, 1)
-			dg_dY = self.ev_concatenate(1, 0)
+			a = self.def_interp.ev(self.Y, self.X, 0, 1)
+			a = np.reshape(a, (self.subset_size, self.subset_size))
+			a = np.transpose(a)
+			print("dg_dx:(check if needs transpose")
+			print(a)
+			dg_dX = a.flatten()
+
+			b = self.def_interp.ev(self.Y, self.X, 1, 0)
+			b = np.reshape(b, (self.subset_size, self.subset_size))
+			b = np.transpose(b)
+			print("dg_dy:(check if needs transpose")
+			print(np.transpose(b))
+			#print(b[0][0])
+			dg_dY = b.flatten()
+
+			#dg_dX = self.ev_concatenate(0, 1)
+			#dg_dY = self.ev_concatenate(1, 0)
 
 			dX_du = 1
 			dX_dv = 0
-			dX_dudx = self.I
+			dX_dudx = np.transpose(np.reshape(self.I,(self.subset_size,self.subset_size))).flatten()
+			print(dX_dudx)
 			dX_dvdy = 0
-			dX_dudy = self.J
+			dX_dudy = np.transpose(np.reshape(self.J,(self.subset_size,self.subset_size))).flatten()
 			dX_dvdx = 0
 
 			dY_du = 0
 			dY_dv = 1
 			dY_dudx = 0
-			dY_dvdy = self.J
+			dY_dvdy = np.transpose(np.reshape(self.J,(self.subset_size,self.subset_size))).flatten()
 			dY_dudy = 0
-			dY_dvdx = self.I
+			dY_dvdx = np.transpose(np.reshape(self.I,(self.subset_size,self.subset_size))).flatten()
 
 			dg_du = np.multiply(dg_dX, dX_du) + np.multiply(dg_dY, dY_du)
+			print("dg_du:")
+			print(dg_du) #good
 			dg_dv = np.multiply(dg_dX, dX_dv) + np.multiply(dg_dY, dY_dv)
+			print("dg_dv:")
+			print(dg_dv)#good
+			#print("delta x du/dx")
+			#print(np.reshape(dX_dudx,(11,11)))
 			dg_dudx = np.multiply(dg_dX, dX_dudx) + np.multiply(dg_dY, dY_dudx)
+			print("dg_dudx")
+			print(dg_dudx)
 			dg_dvdy = np.multiply(dg_dX, dX_dvdy) + np.multiply(dg_dY, dY_dvdy)
+			print("dg_dvdy")
+			print(dg_dvdy)
 			dg_dudy = np.multiply(dg_dX, dX_dudy) + np.multiply(dg_dY, dY_dudy)
+			print("dg_dudy")
+			print(dg_dudy)
 			dg_dvdx = np.multiply(dg_dX, dX_dvdx) + np.multiply(dg_dY, dY_dvdx)
+			print("dg_dvdx")
+			print(dg_dvdx)
 
 			dC_du = np.sum(np.sum(np.multiply((g-f), dg_du)))
 			dC_dv = np.sum(np.sum(np.multiply(g-f, dg_dv)))
@@ -101,6 +163,7 @@ class C_First_Order(object):
 			dC_dvdx = np.sum(np.sum(np.multiply(g-f, dg_dvdx)))
 
 			GRAD = np.multiply(2/SS_f_sq, np.array([ dC_du, dC_dv, dC_dudx, dC_dvdy, dC_dudy, dC_dvdx ]))
+			print(GRAD)
 
 		if nargout > 2:
 			d2C_du2 = np.sum(np.sum(np.multiply(dg_du, dg_du)))
