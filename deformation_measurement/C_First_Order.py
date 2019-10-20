@@ -2,24 +2,16 @@ from math import floor
 import numpy as np
 
 class C_First_Order(object):
-	def __init__(self, subset_size, ref_image, def_interp, def_interp_x, def_interp_y):
-		self.subset_size  = subset_size
+	def set_image(self, ref_image, subset_size):
 		self.ref_image    = ref_image
+		self.subset_size  = subset_size
+
+
+	def set_splines(self, def_interp, def_interp_x, def_interp_y):
 		self.def_interp   = def_interp
 		self.def_interp_x = def_interp_x
 		self.def_interp_y = def_interp_y
-		
-	def ev_concatenate(self, xd, yd):
-		t = self.def_interp.ev(self.X, self.Y,dx=xd, dy=yd)
-		g = np.zeros_like(t)
-		tmp = 0
 
-		for first_index in range(1, self.subset_size+1):
-			for second_index in range(1, self.subset_size+1):
-				g[0,tmp] = t[0,((second_index - 1)*7+first_index)-1]
-				tmp+=1
-
-		return g
 
 	def define_deformed_subset(self, q, Xp, Yp):
 		half_subset = floor(self.subset_size / 2)
@@ -115,9 +107,6 @@ class C_First_Order(object):
 			print(np.transpose(b))
 			#print(b[0][0])
 			dg_dY = b.flatten()
-
-			#dg_dX = self.ev_concatenate(0, 1)
-			#dg_dY = self.ev_concatenate(1, 0)
 
 			dX_du = 1
 			dX_dv = 0
