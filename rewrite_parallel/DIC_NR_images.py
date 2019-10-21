@@ -9,9 +9,12 @@ from scipy.interpolate import RectBivariateSpline
 from joblib import Parallel, delayed
 import multiprocessing
 class DIC_NR:
-	def set_parameters(self, ref_img, def_img, subsetSize, ini_guess):
+	def __init__(self, debug=False):
+		self.debug = debug
+
+	def set_parameters(self, ref_img: str, def_img: str, subset_size: int = 21, ini_guess: list = [0, 0]):
 		# Initialize variables
-		self.subset_size = subsetSize
+		self.subset_size = subset_size
 		self.spline_order = 6
 		self.ini_guess = ini_guess
 
@@ -52,13 +55,11 @@ class DIC_NR:
 
 		self.Xmax = self.X_size-(ceil((self.subset_size/2)+ 15) - 1)
 		self.Ymax = self.Y_size-(ceil((self.subset_size/2) + 15) - 1)
-		#print(self.Ymax)
+
 		self.Xp = self.Xmin
 		self.Yp = self.Ymin
 
-		if ( (self.Xp < self.Xmin) or (self.Yp < self.Ymin) or (self.Xp > self.Xmax) or  (self.Yp > self.Ymax) ):
-			#print(self.Xp)
-			#print(self.Yp)
+		if (self.Xp < self.Xmin) or (self.Yp < self.Ymin) or (self.Xp > self.Xmax) or (self.Yp > self.Ymax):
 			raise ValueError('Process terminated!!! First point of centre of subset is on the edge of the image. ')
 
 		self.initial_guess()
@@ -68,13 +69,17 @@ class DIC_NR:
 		self.cfo.set_image(self.ref_image, self.subset_size)
 		self.cfo.set_splines(self.def_interp, self.def_interp_x, self.def_interp_y)
 
+		self.initialised = True
+
+
 	def initial_guess(self, ref_img=None, def_img=None):
 		if type(ref_img) == type(None) or type(def_img) == type(None):
 			ref_img = self.ref_image
 			def_img = self.def_image
+			if type(ref_img) == type(None):
+				raise error("Tried to run initial_guess without supplying ref_img")
 
 		# Automatic Initial Guess
-		#q_0 = np.zeros_like([], shape=6)
 		q_0 = np.zeros(6)
 		q_0[0:2] = self.ini_guess
 
@@ -100,7 +105,6 @@ class DIC_NR:
 		# Check every value of u and v and see where the best match occurs
 		for iter1 in range(u_check.size):
 			for iter2 in range(v_check.size):
-
 				#Define intensities for deformed subset
 				y0 = self.Yp - half_subset + v_check[iter2]
 				y1 = self.Yp + half_subset + v_check[iter2]
@@ -123,6 +127,8 @@ class DIC_NR:
 
 
 	def fit_spline(self):
+		if type(self.ref_image) == type(None):
+			raise error("Tried to run fit_spline before supplying parameters")
 
 		# Obtain the size of the reference image
 		Y_size, X_size,tmp = self.ref_image.shape
@@ -199,84 +205,6 @@ class DIC_NR:
 		return self.DEFORMATION_PARAMETERS[yy,xx]
 
 	def calculate(self):
-<<<<<<< Updated upstream:deformation_measurement/DIC_NR_images.py
-		DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)#dunno why shape wont work for me, shape=(self.Y_size, self.X_size, 12))
-
-		calc_start_time = datetime.now()
-
-		for yy in range(self.Ymin, self.Ymax + 1):
-			if yy > self.Ymin:
-				self.q_k[0:6] = DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
-
-			for xx in range(self.Xmin, self.Xmax + 1):
-				#Points for correlation and initializaing the q matrix
-				self.Xp = xx
-				self.Yp = yy
-
-				start = datetime.now() - calc_start_time
-
-				# __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
-				# if (itr_skip == 0)
-				# Initialize some values
-				n = 0
-				C_last, GRAD_last, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # q_k was the result from last point or the user's guess
-				optim_completed = False
-
-				if np.isnan(abs(np.mean(np.mean(HESS)))):
-					optim_completed = True
-
-				while not optim_completed:
-					# Compute the next guess and update the values
-					#delta_q = np.negative(np.matmul(np.linalg.inv(HESS),GRAD_last))
-					delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
-					print(delta_q)
-					self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
-					C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
-					
-					# Add one to the iteration counter
-					n = n + 1 # Keep track of the number of iterations
-
-					# Check to see if the values have converged according to the stopping criteria
-					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
-						optim_completed = True
-					
-					C_last = C #Save the C value for comparison in the next iteration
-					GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
-				#_________________________________________________________________________
-				end = (datetime.now() - calc_start_time) - start
-
-				#_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
-				# Store the current displacements
-				DEFORMATION_PARAMETERS[yy,xx,0]  = self.q_k[0] # displacement x
-				DEFORMATION_PARAMETERS[yy,xx,1]  = self.q_k[1] # displacement y
-				DEFORMATION_PARAMETERS[yy,xx,2]  = self.q_k[2] 
-				DEFORMATION_PARAMETERS[yy,xx,3]  = self.q_k[3] 
-				DEFORMATION_PARAMETERS[yy,xx,4]  = self.q_k[4] 
-				DEFORMATION_PARAMETERS[yy,xx,5]  = self.q_k[5] 
-				DEFORMATION_PARAMETERS[yy,xx,6]  = 1 - C # correlation co-efficient final value
-
-				# store points which are correlated in reference image i.e. center of subset
-				DEFORMATION_PARAMETERS[yy,xx,7]  = self.Xp
-				DEFORMATION_PARAMETERS[yy,xx,8]  = self.Yp
-
-				DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
-				DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
-				DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
-
-			#print(yy)
-			#print(xx)
-
-
-		'''
-		filename = f"DEFORMATION_PARAMETERS({ref_img}, {def_img}, {Globs.subset_size})".replace('/', '')
-		xxx,yyy,zzz = DEFORMATION_PARAMETERS.shape
-		sav = np.swapaxes(DEFORMATION_PARAMETERS,2,1).reshape((xxx,yyy*zzz), order='A')
-		savetxt_compact(filename, sav)
-		savetxt_compact_matlab(filename, sav)
-		'''
-
-		return DEFORMATION_PARAMETERS
-=======
 		if not self.initialised:
 			raise error("Tried to run calculate before setting parameters. Please use set_parameters first.")
 
@@ -287,4 +215,3 @@ class DIC_NR:
 		results = Parallel(n_jobs=num_cores)(delayed(self.calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
 		
 		return np.array(results)
->>>>>>> Stashed changes:rewrite_parallel/DIC_NR_images.py
