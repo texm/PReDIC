@@ -21,8 +21,6 @@ class C_First_Order(object):
 
 		self.I_matrix, self.J_matrix = np.meshgrid(i, j)
 
-		self.N = self.subset_size * self.subset_size
-
 		self.I = self.I_matrix.flatten()
 		self.J = self.J_matrix.flatten()
 
@@ -59,6 +57,9 @@ class C_First_Order(object):
 
 		SS_f_g = np.sum(np.sum(np.square((f-g))))
 		SS_f_sq = np.sum(np.sum(np.square(f)))
+
+		if(SS_f_sq == 0):
+			raise error("Reference subset contains no image data, a larger subset is necessary to capture more speckle information.")
 
 		C = np.divide(SS_f_g, SS_f_sq)
 
