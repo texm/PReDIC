@@ -27,6 +27,36 @@ class Test_C_First_Order(unittest.TestCase):
 		#Moved from (20,20) to (21,20) according to u=1
 		self.assertEqual(cfo.X[60] , 21)
 		self.assertEqual(cfo.Y[60] , 20)
+	
+	def test_define_deformed_subset2(self):
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+
+		q = [1,0,0,0,0,0]
+
+		cfo = C_First_Order()
+		cfo.set_image(ref_img, 13)
+		cfo.define_deformed_subset(q, 20,20)
+
+		#Center of deformed subset
+		#Moved from (20,20) to (23,20) according to u=1
+		self.assertEqual(cfo.X[60] , 23)
+		self.assertEqual(cfo.Y[60] , 18)
+		
+	def test_define_deformed_subset3(self):
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+
+		q = [1,0,0,0,0,0]
+
+		cfo = C_First_Order()
+		cfo.set_image(ref_img, 15)
+		cfo.define_deformed_subset(q, 20,20)
+
+		#Center of deformed subset
+		#Moved from (20,20) to (25,20) according to u=1
+		self.assertEqual(cfo.X[60] , 14)
+		self.assertEqual(cfo.Y[60] , 20)
 
 	def test_calculate(self):
 		ref_img = np.expand_dims(np.reshape(np.arange(41*41), (41,41)), axis = 2)
