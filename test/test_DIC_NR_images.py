@@ -13,6 +13,7 @@ from scipy.interpolate import RectBivariateSpline
 
 class Test_DIC_NR(unittest.TestCase):
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 	def test_initial_guess(self):
 
@@ -124,6 +125,8 @@ class Test_DIC_NR(unittest.TestCase):
 		#savetxt_compact("output",sav)
 		
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 	def test_whole(self):
