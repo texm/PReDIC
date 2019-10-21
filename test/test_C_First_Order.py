@@ -29,13 +29,29 @@ class Test_C_First_Order(unittest.TestCase):
 		self.assertEqual(cfo.Y[60] , 20)
 
 	def test_calculate(self):
-		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.expand_dims(np.reshape(np.arange(41*41), (41,41)), axis = 2)
 		ref_img = np.insert(ref_img, 1, 0, axis = 2)
 		def_img = np.roll(ref_img.copy(), 1, axis = 1)
 		
 		dicr_1 = DIC_NR()
-		dicr_1.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "def50.bmp", 11, [0,0])
-		dicr_1.initial_guess(ref_img, def_img)
+		dicr_1.set_parameters(ref_img, def_img, 11, [0,0])
+
+		q = [1,0,0,0,0,0]
+
+		cfo = C_First_Order()
+		cfo.set_image(ref_img, 11)
+		cfo.set_splines(dicr_1.def_interp, dicr_1.def_interp_x, dicr_1.def_interp_y)
+		a, b, c = cfo.calculate(q, 20, 20)
+		print(cfo.X)
+		print(cfo.Y)
+		print("x coords, y coords")
+		print(np.reshape(cfo.X,(11,11)))
+		print(np.reshape(cfo.Y,(11,11)))
+		print("returns:")
+		print(a)
+		print(b)
+		print(c)
+
 
 	#For quite a few of these tests I have set them up with subset size 11
 	#In the case where the image is 40x40, this means Xmin,Ymin,Xp,Yp,Xmax & Ymax should all be 20
