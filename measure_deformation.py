@@ -32,10 +32,7 @@ parser.add_argument("-o", "--output", dest="output_file",
 
 args = parser.parse_args()
 
-dic = dm.DIC_NR()
-
-#if args.debug_mode:
-#	dic.enable_debug()
+dic = dm.DIC_NR(args.debug_mode)
 
 dic.set_parameters(args.ref_image, args.def_image, args.subset_size, args.ini_guess)
 results = dic.calculate()
@@ -48,6 +45,7 @@ if args.output_file != None:
 		for row in output:
 			line = ",".join("0" if n == 0 else f"{n:.6g}" for n in row)
 			fh.write(line + '\n')
+	print(f"Result written to {args.output_file}")
 else:
 	for row in output:
 		print(",".join("0" if n == 0 else f"{n:.6g}" for n in row))
