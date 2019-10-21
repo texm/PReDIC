@@ -1,5 +1,5 @@
 # CITS3200_Group16
-Digital Image Correlation in Python3
+Digital Image Correlation in Python 3. Using spline interpolation and Newton-Raphson method for convergence.
 
 ## Setup
 To setup & install dependencies we will create a virtual environment and install from `requirements.txt`.
