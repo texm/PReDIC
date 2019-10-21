@@ -61,21 +61,17 @@ class C_First_Order(object):
 			dX_dudx = self.I
 			dX_dvdy = 0
 			dX_dudy = self.J
-
 			dX_dvdx = 0
-			dX_dvdy = 0
 
 			dY_du = 0
 			dY_dv = 1
 			dY_dudx = 0
-
 			dY_dvdy = self.J
 			dY_dudy = 0
 			dY_dvdx = self.I
 
 			dg_du = np.multiply(dg_dX, dX_du) + np.multiply(dg_dY, dY_du)
 			dg_dv = np.multiply(dg_dX, dX_dv) + np.multiply(dg_dY, dY_dv)
-
 			dg_dudx = np.multiply(dg_dX, dX_dudx) + np.multiply(dg_dY, dY_dudx)
 			dg_dvdy = np.multiply(dg_dX, dX_dvdy) + np.multiply(dg_dY, dY_dvdy)
 			dg_dudy = np.multiply(dg_dX, dX_dudy) + np.multiply(dg_dY, dY_dudy)
@@ -87,7 +83,6 @@ class C_First_Order(object):
 			dC_dvdy = np.sum(np.sum(np.multiply(g-f, dg_dvdy)))
 			dC_dudy = np.sum(np.sum(np.multiply(g-f, dg_dudy)))
 			dC_dvdx = np.sum(np.sum(np.multiply(g-f, dg_dvdx)))
-
 
 			GRAD = np.multiply(2/SS_f_sq, np.array([ dC_du, dC_dv, dC_dudx, dC_dvdy, dC_dudy, dC_dvdx ]))
 
