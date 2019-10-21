@@ -6,7 +6,6 @@ from datetime import datetime
 import numpy as np
 from PIL import Image
 from scipy.interpolate import RectBivariateSpline
-from joblib import Parallel, delayed
 
 class DIC_NR:
 	def __init__(self, debug=False):
@@ -146,75 +145,73 @@ class DIC_NR:
 		self.def_interp_x = self.def_interp(X_defcoord, Y_defcoord, 0, 1)
 		self.def_interp_y = self.def_interp(X_defcoord, Y_defcoord, 1, 0)
 
-	def calculate_helper(self, xx, yy, calc_start_time):
-		#print(yy,xx)
-		if yy > self.Ymin:
-			pass
-		#self.q_k[0:6] = DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
-		#Points for correlation and initializaing the q matrix
-		self.Xp = xx
-		self.Yp = yy
-
-		start = datetime.now() - calc_start_time
-
-		# __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
-		# Initialize some values
-		n = 0
-		C_last, GRAD_last, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # q_k was the result from last point or the user's guess
-		optim_completed = False
-
-		if np.isnan(abs(np.mean(np.mean(HESS)))):
-			optim_completed = True
-
-		while not optim_completed:
-			# Compute the next guess and update the values
-			delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
-			self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
-			C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
-			
-			# Add one to the iteration counter
-			n = n + 1 # Keep track of the number of iterations
-
-			# Check to see if the values have converged according to the stopping criteria
-			if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
-				optim_completed = True
-			
-			C_last = C #Save the C value for comparison in the next iteration
-			GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
-		#_________________________________________________________________________
-		end = (datetime.now() - calc_start_time) - start
-
-		#_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
-		# Store the current displacements
-		self.DEFORMATION_PARAMETERS[yy,xx,0]  = self.q_k[0] # displacement x
-		#print(self.DEFORMATION_PARAMETERS[yy,xx,0])
-		#print(self.DEFORMATION_PARAMETERS[yy,xx,1])
-		self.DEFORMATION_PARAMETERS[yy,xx,1]  = self.q_k[1] # displacement y
-		self.DEFORMATION_PARAMETERS[yy,xx,2]  = self.q_k[2] 
-		self.DEFORMATION_PARAMETERS[yy,xx,3]  = self.q_k[3] 
-		self.DEFORMATION_PARAMETERS[yy,xx,4]  = self.q_k[4] 
-		self.DEFORMATION_PARAMETERS[yy,xx,5]  = self.q_k[5] 
-		self.DEFORMATION_PARAMETERS[yy,xx,6]  = 1 - C # correlation co-efficient final value
-
-		# store points which are correlated in reference image i.e. center of subset
-		self.DEFORMATION_PARAMETERS[yy,xx,7]  = self.Xp
-		self.DEFORMATION_PARAMETERS[yy,xx,8]  = self.Yp
-
-		self.DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
-		self.DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
-		self.DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
-		#print(self.DEFORMATION_PARAMETERS[yy,xx])
-		return self.DEFORMATION_PARAMETERS[yy,xx]
 
 	def calculate(self):
 		if not self.initialised:
 			raise error("Tried to run calculate before setting parameters. Please use set_parameters first.")
 
-		self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
+		DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 
 		calc_start_time = datetime.now()
-		results = Parallel(n_jobs=4)(delayed(self.calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
-		#for i in results[40][40]:
-		#	print(i)
-		
-		return np.array(results)
+
+		for yy in range(self.Ymin, self.Ymax + 1):
+			if yy > self.Ymin:
+				self.q_k[0:6] = DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
+
+			for xx in range(self.Xmin, self.Xmax + 1):
+				#Points for correlation and initializaing the q matrix
+				self.Xp = xx
+				self.Yp = yy
+
+				start = datetime.now() - calc_start_time
+
+				# __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
+				# Initialize some values
+				n = 0
+				C_last, GRAD_last, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # q_k was the result from last point or the user's guess
+				optim_completed = False
+
+				if np.isnan(abs(np.mean(np.mean(HESS)))):
+					optim_completed = True
+
+				while not optim_completed:
+					# Compute the next guess and update the values
+					delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
+					self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
+					C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
+					
+					# Add one to the iteration counter
+					n = n + 1 # Keep track of the number of iterations
+
+					# Check to see if the values have converged according to the stopping criteria
+					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
+						optim_completed = True
+					
+					C_last = C #Save the C value for comparison in the next iteration
+					GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
+				#_________________________________________________________________________
+				end = (datetime.now() - calc_start_time) - start
+
+				#_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
+				# Store the current displacements
+				DEFORMATION_PARAMETERS[yy,xx,0]  = self.q_k[0] # displacement x
+				DEFORMATION_PARAMETERS[yy,xx,1]  = self.q_k[1] # displacement y
+				DEFORMATION_PARAMETERS[yy,xx,2]  = self.q_k[2] 
+				DEFORMATION_PARAMETERS[yy,xx,3]  = self.q_k[3] 
+				DEFORMATION_PARAMETERS[yy,xx,4]  = self.q_k[4] 
+				DEFORMATION_PARAMETERS[yy,xx,5]  = self.q_k[5] 
+				DEFORMATION_PARAMETERS[yy,xx,6]  = 1 - C # correlation co-efficient final value
+
+				# store points which are correlated in reference image i.e. center of subset
+				DEFORMATION_PARAMETERS[yy,xx,7]  = self.Xp
+				DEFORMATION_PARAMETERS[yy,xx,8]  = self.Yp
+
+				DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
+				DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
+				DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
+
+			if self.debug:
+				print(yy)
+				print(xx)
+
+		return DEFORMATION_PARAMETERS
