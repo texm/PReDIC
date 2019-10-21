@@ -48,12 +48,15 @@ class DIC_NR:
 		range of initial guess accuracy.
 		'''
 		# +15 due to range of calc in initial_guess
-		# -1 due to python indexing at 0, keep outside of rounding, using ceil as round will round down at 0.5
-		self.Xmin = ceil((self.subset_size/2) + 15) -1
+		# border is number of places from edge required
+		border = floor((self.subset_size/2) + 15)
+		# Due to 0 indexing, min position can be placed "at" border.
+		self.Xmin = border
 		self.Ymin = self.Xmin
 
-		self.Xmax = self.X_size-(ceil((self.subset_size/2)+ 15) - 1)
-		self.Ymax = self.Y_size-(ceil((self.subset_size/2) + 15) - 1)
+		#Due to zero indexing, to get last position, subtract 1.
+		self.Xmax = (self.X_size - 1)-border
+		self.Ymax = (self.Y_size - 1)-border
 
 		self.Xp = self.Xmin
 		self.Yp = self.Ymin
@@ -72,6 +75,7 @@ class DIC_NR:
 
 
 	def initial_guess(self, ref_img=None, def_img=None):
+		#For use in testing initial guess
 		if type(ref_img) == type(None) or type(def_img) == type(None):
 			ref_img = self.ref_image
 			def_img = self.def_image
