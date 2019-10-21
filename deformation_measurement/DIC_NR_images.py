@@ -159,7 +159,7 @@ class DIC_NR:
 	def parallel_calculate_helper(self, yy, xx, calc_start_time):
 		if yy > self.Ymin:
 			pass
-		#self.q_k[0:6] = DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
+
 		#Points for correlation and initializaing the q matrix
 		self.Xp = xx
 		self.Yp = yy
@@ -286,12 +286,11 @@ class DIC_NR:
 		self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 
 		calc_start_time = datetime.now()
-		if (self.parallel == False):
-			self.sequential_calculate(calc_start_time)
-		else:
+
+		if self.parallel:
 			num_cores = multiprocessing.cpu_count()
 			
-			results = Parallel(n_jobs=num_cores)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
+			results = Parallel(n_jobs=num_cores,max_nbytes=None)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
 			self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 			for i in range(len(results[:])):
 				self.DEFORMATION_PARAMETERS[int(results[i][7]),int(results[i][8])] = results[i]
