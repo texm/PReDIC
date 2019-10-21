@@ -2,18 +2,19 @@
 
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 import deformation_measurement as dm
 
 parser = argparse.ArgumentParser(description="Measure deformation between two images, given a subset size and optional initial guess.")
 
 parser.add_argument("ref_image", metavar="ref_image", type=str,
-                    help="The reference image to calculate deformations to")
+					help="The reference image to calculate deformations to")
 
 parser.add_argument("def_image", metavar="def_image", type=str,
-                    help="The deformed image to calculate deformations from")
+					help="The deformed image to calculate deformations from")
 
 parser.add_argument("-s", "--subset_size", metavar="N", type=int,
-					nargs="?", default=11, required=False,
+					nargs="?", default=21, required=False,
 					help="The subset size to use. Default=11")
 
 parser.add_argument("-i", "--initial_guess", metavar="N", type=float, 
@@ -30,6 +31,9 @@ parser.add_argument("-o", "--output", dest="output_file",
 					type=str, required=False,
 					help="File to write formatted csv output to")
 
+parser.add_argument("-v", "--visualise", dest="visualise", action="store_true",
+					help="Automatically use matplotlib to visualise the output.")
+
 args = parser.parse_args()
 
 dic = dm.DIC_NR(args.debug_mode)
@@ -39,6 +43,35 @@ results = dic.calculate()
 
 x,y,z = results.shape
 output = np.swapaxes(results, 2, 1).reshape((x, y*z), order="A")
+
+def vis_plotter(results, arr_name):
+	x = results[:,:,0]
+	y = results[:,:,0]
+	residual = (x**2 + y**2 )**0.5
+
+	ig, ax = plt.subplots()
+
+	plt.subplot(1, 2, 1)
+	plt.title(arr_name + " X Deformations")
+	imgplot = plt.imshow(x)
+	imgplot.set_cmap('YlGnBu')
+	ax.set_xlabel("X")
+	ax.set_ylabel("Y")
+	plt.colorbar()
+
+	plt.subplot(1, 2, 2)
+	plt.title(arr_name + " Y Deformations")
+	imgplot = plt.imshow(y)
+	imgplot.set_cmap('YlGnBu')
+	ax.set_xlabel("X")
+	ax.set_ylabel("Y")
+	plt.colorbar()
+
+	plt.show()
+	plt.close()
+
+if args.visualise:
+	vis_plotter(results, args.def_image)
 
 if args.output_file != None:
 	with open(args.output_file, 'w+') as fh:
