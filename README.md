@@ -1,5 +1,5 @@
 # CITS3200_Group16
-Digital Image Correlation in Python 3
+Digital Image Correlation in Python 3. Using spline interpolation and Newton-Raphson method for convergence.
 
 ## Using in a program
 From the `deformation_measurement` package, import the class DIC_NR.
