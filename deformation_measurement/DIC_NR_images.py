@@ -294,5 +294,7 @@ class DIC_NR:
 			self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 			for i in range(len(results[:])):
 				self.DEFORMATION_PARAMETERS[int(results[i][7]),int(results[i][8])] = results[i]
+		else:
+			self.sequential_calculate(calc_start_time)
 
 		return self.DEFORMATION_PARAMETERS
