@@ -109,10 +109,32 @@ class Test_DIC_NR(unittest.TestCase):
 		result3 = dicnr.def_interp.ev(49,0)
 
 		self.assertTrue(math.isclose(actual_val_48_0, result1, rel_tol = 0.01))
-		self.assertTrue(actual_val_48_0<= result2 <= actual_val_49_0)
+		self.assertTrue(actual_val_48_0 <= result2 <= actual_val_49_0)
 		self.assertTrue(math.isclose(actual_val_49_0, result3, rel_tol = 0.01))
 
 		#TODO: test derivative spline
+		
+	def test_fit_spline2(self):
+
+		test_image_2 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
+		test_image_2 = test_image_2.astype('d')
+
+		actual_val_24_0 = test_image_2[24,0,0]
+		actual_val_25_0 = test_image_2[25,0,0]
+
+		#Note: this is using same image as ref and def
+		dicnr = DIC_NR()
+		dicnr.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "ref50.bmp", 13, [0,0])
+		dicnr.initial_guess()
+		dicnr.fit_spline()
+
+		result1 = dicnr.def_interp.ev(24,0)
+		result2 = dicnr.def_interp.ev(24.5,0)
+		result3 = dicnr.def_interp.ev(25,0)
+
+		self.assertTrue(math.isclose(actual_val_24_0, result1, rel_tol = 0.01))
+		self.assertTrue(actual_val_24_0 <= result2 <= actual_val_49_0)
+		self.assertTrue(math.isclose(actual_val_25_0, result3, rel_tol = 0.01))
 
 	def test_whole(self):
 		dic_2 = DIC_NR()
