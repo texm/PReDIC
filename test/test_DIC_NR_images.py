@@ -1,5 +1,5 @@
 import sys, os, unittest
-
+from timeit import default_timer as timer
 PARENT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../"
 sys.path.append(PARENT_DIR)
 
@@ -12,6 +12,7 @@ from PIL import Image
 from scipy.interpolate import RectBivariateSpline
 
 class Test_DIC_NR(unittest.TestCase):
+<<<<<<< Updated upstream
 
 	def test_initial_guess(self):
 
@@ -123,33 +124,18 @@ class Test_DIC_NR(unittest.TestCase):
 		#savetxt_compact("output",sav)
 		
 
+=======
+>>>>>>> Stashed changes
 	def test_whole(self):
+		start = timer()
 		dic = DIC_NR()
-		dic.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "def50.bmp", 7, [0, 0])
-		print("Not running whole calculation")
-		'''result = dic.calculate()
-		x,y,z = result.shape
-		sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
+		dic.set_parameters(TEST_IMAGE_DIR + "ref100_stretch.bmp", TEST_IMAGE_DIR + "def100_stretch.bmp", 21, [0, 0])
+		result = dic.calculate()
+		#sav = np.swapaxes(result, 2, 1).reshape((x, y*z), order='A')
 
-		savetxt_compact("output", sav)'''
-
-	''' no file def_500_19?
-	def test_gen(self):
-		#test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "def_500_19.bmp").convert('LA')) # numpy.array#
-		#test_image_1 = test_image_1.astype('d')
-		#print(test_image_1)
-
-		dic = DIC_NR()
-		dic.set_parameters(TEST_IMAGE_DIR + "ref_500_19.bmp", TEST_IMAGE_DIR + "def_500_19.bmp", 11, [0,0])
-		dic.initial_guess()
-		dic.fit_spline()
-		output = dic.calculate()
-
-		x,y,z = output.shape
-		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
-
-		#savetxt_compact("output",sav)
-	'''
+		savetxt_compact("output", result)
+		end = timer()
+		print(end- start)
 
 def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
 	with open(f"compact_{fname}.csv", 'w+') as fh:
