@@ -22,9 +22,6 @@ class C_First_Order(object):
 		self.I_matrix, self.J_matrix = np.meshgrid(i, j)
 
 		self.N = self.subset_size * self.subset_size
-		
-		#self.I = np.reshape(self.I_matrix, (1, self.N), 'F')
-		#self.J = np.reshape(self.J_matrix, (1, self.N), 'F')
 
 		self.I = self.I_matrix.flatten()
 		self.J = self.J_matrix.flatten()
@@ -66,23 +63,14 @@ class C_First_Order(object):
 		C = np.divide(SS_f_g, SS_f_sq)
 
 		if nargout > 1:
-			reshaped_I = np.reshape(self.I, (self.subset_size, self.subset_size))
-			reshaped_J = np.reshape(self.J, (self.subset_size, self.subset_size))
 
-			a = self.def_interp.ev(self.X, self.Y, 0, 1)
-			a = np.reshape(a, (self.subset_size, self.subset_size))
-
-			dg_dX = np.transpose(a).flatten()
-
-			b = self.def_interp.ev(self.Y, self.X, 1, 0)
-			b = np.reshape(b, (self.subset_size, self.subset_size))
-
-			dg_dY = np.transpose(b).flatten()
+			dg_dX = self.def_interp.ev(self.Y, self.X, 0, 1)
+			dg_dY = self.def_interp.ev(self.Y, self.X, 1, 0)
 
 			dX_du = 1
 			dX_dv = 0
-			dX_dudx = np.transpose(reshaped_I).flatten()
-			dX_dudy = np.transpose(reshaped_J).flatten()
+			dX_dudx = self.I
+			dX_dudy = self.J
 			dX_dvdx = 0
 			dX_dvdy = 0
 
@@ -90,8 +78,8 @@ class C_First_Order(object):
 			dY_dv = 1
 			dY_dudx = 0
 			dY_dudy = 0
-			dY_dvdy = np.transpose(reshaped_J).flatten()
-			dY_dvdx = np.transpose(reshaped_I).flatten()
+			dY_dvdy = self.J
+			dY_dvdx = self.I
 
 			dg_du = np.multiply(dg_dX, dX_du) + np.multiply(dg_dY, dY_du)
 			dg_dv = np.multiply(dg_dX, dX_dv) + np.multiply(dg_dY, dY_dv)
