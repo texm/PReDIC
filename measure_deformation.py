@@ -32,7 +32,7 @@ parser.add_argument("-p", "--parallel", dest="parallel_mode", action="store_true
 
 parser.add_argument("-o", "--output", dest="output_file", 
 					type=str, required=False,
-					help="File to write formatted csv output to")
+					help="File to write formatted csv output. If alongside parallel, the output format is different")
 
 parser.add_argument("-v", "--visualise", dest="visualise", action="store_true",
 					help="Automatically use matplotlib to visualise the output.")
