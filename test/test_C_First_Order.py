@@ -1,4 +1,4 @@
-import sys, os, unittest
+import sys, os, unittest, pytest
 
 PARENT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../"
 sys.path.append(PARENT_DIR)
@@ -12,6 +12,31 @@ from PIL import Image
 from scipy.interpolate import RectBivariateSpline
 
 class Test_C_First_Order(unittest.TestCase):
+
+	def test_define_deformed_subset(self):
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+
+		q = [1,0,0,0,0,0]
+
+		cfo = C_First_Order()
+		cfo.set_image(ref_img, 11)
+		cfo.define_deformed_subset(q, 20,20)
+
+		#Center of deformed subset
+		#Moved from (20,20) to (21,20) according to u=1
+		self.assertEqual(cfo.X[60] , 21)
+		self.assertEqual(cfo.Y[60] , 20)
+
+	def test_calculate(self):
+		ref_img = np.expand_dims(np.reshape(np.arange(40*40), (40,40)), axis = 2)
+		ref_img = np.insert(ref_img, 1, 0, axis = 2)
+		def_img = np.roll(ref_img.copy(), 1, axis = 1)
+		
+		dicr_1 = DIC_NR()
+		dicr_1.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "def50.bmp", 11, [0,0])
+		dicr_1.initial_guess(ref_img, def_img)
+
 	#For quite a few of these tests I have set them up with subset size 11
 	#In the case where the image is 40x40, this means Xmin,Ymin,Xp,Yp,Xmax & Ymax should all be 20
 	def test_interpolation(self):
@@ -86,21 +111,4 @@ class Test_C_First_Order(unittest.TestCase):
 
 		print(col1)
 		print(col2)
-		'''
-
-	def test_define_deformed_subset(self):
-		#TODO: use the updated class version
-		#i, j, I_matrix, J_matrix, N, I, J, X, Y = define_deformed_subset(11, 20, 20, 0, 0, 0, 0, 0, 0)
-		'''
-		print(i)
-		print(j)
-		print(I_matrix)
-		print(J_matrix)
-		print(N)
-		print(I)
-		print(I.shape)
-		print(J)
-		print(J.shape)
-		print(X)
-		print(Y)
 		'''

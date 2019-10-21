@@ -26,6 +26,9 @@ class C_First_Order(object):
 		self.I = np.reshape(self.I_matrix, (1, self.N), 'F')
 		self.J = np.reshape(self.J_matrix, (1, self.N), 'F')
 
+		self.I = self.I_matrix.flatten()
+		self.J = self.J_matrix.flatten()
+
 		u           = q[0]
 		v           = q[1]
 		du_dx       = q[2]
@@ -37,6 +40,8 @@ class C_First_Order(object):
 		self.Y = Yp + v + self.J + np.multiply(self.J, dv_dy) + np.multiply(self.I, dv_dx)
 
 
+
+
 	def calculate(self, q, Xp, Yp, nargout=3):
 		C = 0.0
 		GRAD = 0.0
@@ -46,7 +51,7 @@ class C_First_Order(object):
 
 		self.define_deformed_subset(q, Xp, Yp)
 
-		g = self.def_interp.ev(self.Y, self.X)
+		g = self.def_interp.ev(self.X, self.Y)
 		g = np.reshape(g, (self.subset_size, self.subset_size))
 
 		g = np.transpose(g).flatten()

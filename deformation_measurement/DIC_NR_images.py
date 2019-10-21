@@ -86,6 +86,8 @@ class DIC_NR:
 		q_0 = np.zeros(6)
 		q_0[0:2] = self.ini_guess
 
+		#TODO: need to check u & v fit within subset
+
 		# check all values of u & v within +/- 15 range of initial guess
 		range_ = 15
 		u_check = np.arange((round(q_0[0]) - range_), (round(q_0[0]) + range_)+1, 1, dtype=int)

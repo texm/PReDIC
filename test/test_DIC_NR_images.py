@@ -119,7 +119,6 @@ class Test_DIC_NR(unittest.TestCase):
 		print()
 
 	def test_something(self):
-		print()
 		'''
 		test_image_1 = np.array(Image.open(TEST_IMAGE_DIR + "ref50.bmp").convert('LA')) # numpy.array
 		test_image_1 = test_image_1.astype('d')
@@ -173,7 +172,7 @@ class Test_DIC_NR(unittest.TestCase):
 		x,y,z = output_2.shape
 		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
 
-		#savetxt_compact("output",sav)
+		savetxt_compact("output",sav)
 		
 
 	def test_whole(self):
