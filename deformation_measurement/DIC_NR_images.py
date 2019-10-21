@@ -209,9 +209,71 @@ class DIC_NR:
 		self.DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
 		self.DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
 		self.DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
-
+		if self.debug:
+			print(yy)
+			print(xx)
 		return self.DEFORMATION_PARAMETERS[yy,xx]
 
+	def sequential_calculate(self, calc_start_time):
+		for yy in range(self.Ymin, self.Ymax + 1):
+			if yy > self.Ymin:
+				self.q_k[0:6] = self.DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
+
+			for xx in range(self.Xmin, self.Xmax + 1):
+				#Points for correlation and initializaing the q matrix
+				self.Xp = xx
+				self.Yp = yy
+
+				start = datetime.now() - calc_start_time
+
+				# __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
+				# Initialize some values
+				n = 0
+				C_last, GRAD_last, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # q_k was the result from last point or the user's guess
+				optim_completed = False
+
+				if np.isnan(abs(np.mean(np.mean(HESS)))):
+					optim_completed = True
+
+				while not optim_completed:
+					# Compute the next guess and update the values
+					delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
+					self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
+					C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
+					
+					# Add one to the iteration counter
+					n = n + 1 # Keep track of the number of iterations
+
+					# Check to see if the values have converged according to the stopping criteria
+					if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
+						optim_completed = True
+					
+					C_last = C #Save the C value for comparison in the next iteration
+					GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
+				#_________________________________________________________________________
+				end = (datetime.now() - calc_start_time) - start
+
+				#_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
+				# Store the current displacements
+				self.DEFORMATION_PARAMETERS[yy,xx,0]  = self.q_k[0] # displacement x
+				self.DEFORMATION_PARAMETERS[yy,xx,1]  = self.q_k[1] # displacement y
+				self.DEFORMATION_PARAMETERS[yy,xx,2]  = self.q_k[2] 
+				self.DEFORMATION_PARAMETERS[yy,xx,3]  = self.q_k[3] 
+				self.DEFORMATION_PARAMETERS[yy,xx,4]  = self.q_k[4] 
+				self.DEFORMATION_PARAMETERS[yy,xx,5]  = self.q_k[5] 
+				self.DEFORMATION_PARAMETERS[yy,xx,6]  = 1 - C # correlation co-efficient final value
+
+				# store points which are correlated in reference image i.e. center of subset
+				self.DEFORMATION_PARAMETERS[yy,xx,7]  = self.Xp
+				self.DEFORMATION_PARAMETERS[yy,xx,8]  = self.Yp
+
+				self.DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
+				self.DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
+				self.DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
+
+			if self.debug:
+				print(yy)
+				print(xx)
 
 	def calculate(self):
 		if not self.initialised:
@@ -221,66 +283,9 @@ class DIC_NR:
 
 		calc_start_time = datetime.now()
 		if (self.parallel == False):
-			for yy in range(self.Ymin, self.Ymax + 1):
-				if yy > self.Ymin:
-					self.q_k[0:6] = self.DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
-
-				for xx in range(self.Xmin, self.Xmax + 1):
-					#Points for correlation and initializaing the q matrix
-					self.Xp = xx
-					self.Yp = yy
-
-					start = datetime.now() - calc_start_time
-
-					# __________OPTIMIZATION ROUTINE: FIND BEST FIT____________________________
-					# Initialize some values
-					n = 0
-					C_last, GRAD_last, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # q_k was the result from last point or the user's guess
-					optim_completed = False
-
-					if np.isnan(abs(np.mean(np.mean(HESS)))):
-						optim_completed = True
-
-					while not optim_completed:
-						# Compute the next guess and update the values
-						delta_q = np.linalg.lstsq(HESS,(-GRAD_last), rcond=None) # Find the difference between q_k+1 and q_k
-						self.q_k = self.q_k + delta_q[0]                             #q_k+1 = q_k + delta_q[0]
-						C, GRAD, HESS = self.cfo.calculate(self.q_k, self.Xp, self.Yp) # Compute new values
-						
-						# Add one to the iteration counter
-						n = n + 1 # Keep track of the number of iterations
-
-						# Check to see if the values have converged according to the stopping criteria
-						if n > self.Max_num_iter or (abs(C-C_last) < self.TOL[0] and all(abs(delta_q[0]) < self.TOL[1])): #needs to be tested...
-							optim_completed = True
-						
-						C_last = C #Save the C value for comparison in the next iteration
-						GRAD_last = GRAD # Save the GRAD value for comparison in the next iteration
-					#_________________________________________________________________________
-					end = (datetime.now() - calc_start_time) - start
-
-					#_______STORE RESULTS AND PREPARE INDICES OF NEXT SUBSET__________________
-					# Store the current displacements
-					self.DEFORMATION_PARAMETERS[yy,xx,0]  = self.q_k[0] # displacement x
-					self.DEFORMATION_PARAMETERS[yy,xx,1]  = self.q_k[1] # displacement y
-					self.DEFORMATION_PARAMETERS[yy,xx,2]  = self.q_k[2] 
-					self.DEFORMATION_PARAMETERS[yy,xx,3]  = self.q_k[3] 
-					self.DEFORMATION_PARAMETERS[yy,xx,4]  = self.q_k[4] 
-					self.DEFORMATION_PARAMETERS[yy,xx,5]  = self.q_k[5] 
-					self.DEFORMATION_PARAMETERS[yy,xx,6]  = 1 - C # correlation co-efficient final value
-
-					# store points which are correlated in reference image i.e. center of subset
-					self.DEFORMATION_PARAMETERS[yy,xx,7]  = self.Xp
-					self.DEFORMATION_PARAMETERS[yy,xx,8]  = self.Yp
-
-					self.DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
-					self.DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
-					self.DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
-
-				if self.debug:
-					print(yy)
-					print(xx)
+			self.sequential_calculate(calc_start_time)
 		else:
 			num_cores = multiprocessing.cpu_count()
 			self.DEFORMATION_PARAMETERS = Parallel(n_jobs=num_cores)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
 		return self.DEFORMATION_PARAMETERS
+
