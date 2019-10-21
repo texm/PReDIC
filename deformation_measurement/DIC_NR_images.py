@@ -18,7 +18,7 @@ class DIC_NR:
 	def set_parameters(self, ref_img: str, def_img: str, subset_size: int = 21, ini_guess: list = [0, 0]):
 		# Initialize variables
 		self.subset_size = subset_size
-		self.spline_order = 6
+		self.spline_order = 5
 		self.ini_guess = ini_guess
 
 		# Make sure that the subset size specified is valid (not odd at this point)
@@ -148,7 +148,7 @@ class DIC_NR:
 
 		#Fit spline
 		self.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, self.def_image[:,:,0], 
-			kx=self.spline_order-1, ky=self.spline_order-1)
+			kx=self.spline_order, ky=self.spline_order)
 		#why subtract 1 from spline order?
 
 		#Evaluate derivatives at coordinates
