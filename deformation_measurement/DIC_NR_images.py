@@ -6,8 +6,10 @@ from datetime import datetime
 import numpy as np
 from PIL import Image
 from scipy.interpolate import RectBivariateSpline
+
 from joblib import Parallel, delayed
 import multiprocessing
+
 class DIC_NR:
 	def __init__(self, debug=False, parallel=False):
 		self.debug = debug
@@ -155,7 +157,6 @@ class DIC_NR:
 
 
 	def parallel_calculate_helper(self, yy, xx, calc_start_time):
-
 		if yy > self.Ymin:
 			pass
 		#self.q_k[0:6] = DEFORMATION_PARAMETERS[yy - 1, self.Xmin, 0:6]
@@ -209,10 +210,13 @@ class DIC_NR:
 		self.DEFORMATION_PARAMETERS[yy,xx,9]  = n # number of iterations
 		self.DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
 		self.DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
+
 		if self.debug:
 			print(yy)
 			print(xx)
+
 		return self.DEFORMATION_PARAMETERS[yy,xx]
+
 
 	def sequential_calculate(self, calc_start_time):
 		for yy in range(self.Ymin, self.Ymax + 1):
@@ -287,5 +291,5 @@ class DIC_NR:
 		else:
 			num_cores = multiprocessing.cpu_count()
 			self.DEFORMATION_PARAMETERS = Parallel(n_jobs=num_cores)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
-		return self.DEFORMATION_PARAMETERS
 
+		return self.DEFORMATION_PARAMETERS
