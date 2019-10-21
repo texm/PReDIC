@@ -41,7 +41,7 @@ class C_First_Order(object):
 
 		self.define_deformed_subset(q, Xp, Yp)
 		
-		f = np.reshape(self.ref_image[(Yp + self.j)[0]:((Yp + self.j)[-1]+1), (Xp + self.i)[0]:((Xp + self.i)[-1]+1), 0], (1, self.N), 'F').flatten()
+		f = np.reshape(self.ref_image[(Yp + self.j[0]):((Yp + self.j[-1])+1), (Xp + self.i[0]):((Xp + self.i[-1])+1), 0], (1, self.N), 'F').flatten()
 
 		g = self.def_interp.ev(self.Y, self.X).flatten()
 
@@ -52,6 +52,7 @@ class C_First_Order(object):
 		C = np.divide(SS_f_g, SS_f_sq)
 
 		if nargout > 1:
+
 			dg_dX = self.def_interp.ev(self.Y, self.X, 0, 1).flatten()
 			dg_dY = self.def_interp.ev(self.Y, self.X, 1, 0).flatten()
 
@@ -60,17 +61,21 @@ class C_First_Order(object):
 			dX_dudx = self.I
 			dX_dvdy = 0
 			dX_dudy = self.J
+
 			dX_dvdx = 0
+			dX_dvdy = 0
 
 			dY_du = 0
 			dY_dv = 1
 			dY_dudx = 0
+
 			dY_dvdy = self.J
 			dY_dudy = 0
 			dY_dvdx = self.I
 
 			dg_du = np.multiply(dg_dX, dX_du) + np.multiply(dg_dY, dY_du)
 			dg_dv = np.multiply(dg_dX, dX_dv) + np.multiply(dg_dY, dY_dv)
+
 			dg_dudx = np.multiply(dg_dX, dX_dudx) + np.multiply(dg_dY, dY_dudx)
 			dg_dvdy = np.multiply(dg_dX, dX_dvdy) + np.multiply(dg_dY, dY_dvdy)
 			dg_dudy = np.multiply(dg_dX, dX_dudy) + np.multiply(dg_dY, dY_dudy)
@@ -82,6 +87,7 @@ class C_First_Order(object):
 			dC_dvdy = np.sum(np.sum(np.multiply(g-f, dg_dvdy)))
 			dC_dudy = np.sum(np.sum(np.multiply(g-f, dg_dudy)))
 			dC_dvdx = np.sum(np.sum(np.multiply(g-f, dg_dvdx)))
+
 
 			GRAD = np.multiply(2/SS_f_sq, np.array([ dC_du, dC_dv, dC_dudx, dC_dvdy, dC_dudy, dC_dvdx ]))
 

@@ -12,9 +12,7 @@ from PIL import Image
 from scipy.interpolate import RectBivariateSpline
 
 class Test_DIC_NR(unittest.TestCase):
-
 	def test_initial_guess(self):
-
 		#TEST 1
 		#moving "image" all to right by 1, u = 1, v = 0
 		#check the logic that u & v are indexed correctly
