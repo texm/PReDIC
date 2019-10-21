@@ -290,6 +290,10 @@ class DIC_NR:
 			self.sequential_calculate(calc_start_time)
 		else:
 			num_cores = multiprocessing.cpu_count()
-			self.DEFORMATION_PARAMETERS = Parallel(n_jobs=num_cores)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
+			
+			results = Parallel(n_jobs=num_cores)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
+			self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
+			for i in range(len(results[:])):
+				self.DEFORMATION_PARAMETERS[int(results[i][7]),int(results[i][8])] = results[i]
 
 		return self.DEFORMATION_PARAMETERS

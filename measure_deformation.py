@@ -32,7 +32,7 @@ parser.add_argument("-p", "--parallel", dest="parallel_mode", action="store_true
 
 parser.add_argument("-o", "--output", dest="output_file", 
 					type=str, required=False,
-					help="File to write formatted csv output. If alongside parallel, the output format is different")
+					help="File to write formatted csv output.")
 
 parser.add_argument("-v", "--visualise", dest="visualise", action="store_true",
 					help="Automatically use matplotlib to visualise the output.")
@@ -44,11 +44,8 @@ dic = dm.DIC_NR(args.debug_mode, args.parallel_mode)
 dic.set_parameters(args.ref_image, args.def_image, args.subset_size, args.ini_guess)
 results = dic.calculate()
 
-if (dic.parallel == False):
-	x,y,z = results.shape
-	output = np.swapaxes(results, 2, 1).reshape((x, y*z), order="A")
-else:
-	output = results
+x,y,z = results.shape
+output = np.swapaxes(results, 2, 1).reshape((x, y*z), order="A")
 
 
 def vis_plotter(results, arr_name):
