@@ -1,5 +1,5 @@
 # CITS3200_Group16
-Digital Image Correlation in Python 3
+Digital Image Correlation in Python3
 
 ## Using in a program
 From the `deformation_measurement` package, import the class DIC_NR.
@@ -12,9 +12,12 @@ After that, the method `calculate` will return the results as a numpy array.
 
 For example:
 ```
+import deformation_measurement as dm
+
 dic = dm.DIC_NR()
 dic.set_parameters("ref_image.bmp", "def_image.bmp", 11, [0, 0])
 results = dic.calculate()
+
 print(results)
 ```
 
