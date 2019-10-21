@@ -14,7 +14,7 @@ parser.add_argument("def_image", metavar="def_image", type=str,
 					help="The deformed image to calculate deformations from")
 
 parser.add_argument("-s", "--subset_size", metavar="N", type=int,
-					nargs="?", default=11, required=False,
+					nargs="?", default=21, required=False,
 					help="The subset size to use. Default=11")
 
 parser.add_argument("-i", "--initial_guess", metavar="N", type=float, 
