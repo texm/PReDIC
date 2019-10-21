@@ -8,9 +8,12 @@ from PIL import Image
 from scipy.interpolate import RectBivariateSpline
 
 class DIC_NR:
-	def set_parameters(self, ref_img, def_img, subsetSize, ini_guess):
+	def __init__(self, debug=False):
+		self.debug = debug
+
+	def set_parameters(self, ref_img: str, def_img: str, subset_size: int = 11, ini_guess: list = [0, 0]):
 		# Initialize variables
-		self.subset_size = subsetSize
+		self.subset_size = subset_size
 		self.spline_order = 6
 		self.ini_guess = ini_guess
 
@@ -65,11 +68,15 @@ class DIC_NR:
 		self.cfo.set_image(self.ref_image, self.subset_size)
 		self.cfo.set_splines(self.def_interp, self.def_interp_x, self.def_interp_y)
 
+		self.initialised = True
+
 
 	def initial_guess(self, ref_img=None, def_img=None):
 		if type(ref_img) == type(None) or type(def_img) == type(None):
 			ref_img = self.ref_image
 			def_img = self.def_image
+			if type(ref_img) == type(None):
+				raise error("Tried to run initial_guess without supplying ref_img")
 
 		# Automatic Initial Guess
 		q_0 = np.zeros(6)
@@ -119,6 +126,9 @@ class DIC_NR:
 
 
 	def fit_spline(self):
+		if type(self.ref_image) == type(None):
+			raise error("Tried to run fit_spline before supplying parameters")
+
 		# Obtain the size of the reference image
 		Y_size, X_size,tmp = self.ref_image.shape
 
@@ -137,7 +147,10 @@ class DIC_NR:
 
 
 	def calculate(self):
-		DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)#dunno why shape wont work for me, shape=(self.Y_size, self.X_size, 12))
+		if not self.initialised:
+			raise error("Tried to run calculate before setting parameters. Please use set_parameters first.")
+
+		DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 
 		calc_start_time = datetime.now()
 
@@ -197,7 +210,8 @@ class DIC_NR:
 				DEFORMATION_PARAMETERS[yy,xx,10] = start.total_seconds() #t_tmp # time of spline process
 				DEFORMATION_PARAMETERS[yy,xx,11] = end.total_seconds() #t_optim #time of optimization process
 
-			#print(yy)
-			#print(xx)
+			if self.debug:
+				print(yy)
+				print(xx)
 
 		return DEFORMATION_PARAMETERS
