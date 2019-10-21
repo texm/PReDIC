@@ -145,8 +145,7 @@ class DIC_NR:
 
 		#Fit spline
 		self.def_interp = RectBivariateSpline(X_defcoord, Y_defcoord, self.def_image[:,:,0], 
-			kx=self.spline_order-1, ky=self.spline_order-1)
-		#why subtract 1 from spline order?
+			kx=self.spline_order, ky=self.spline_order)
 
 		#Evaluate derivatives at coordinates
 		self.def_interp_x = self.def_interp(X_defcoord, Y_defcoord, 0, 1)

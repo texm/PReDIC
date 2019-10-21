@@ -21,8 +21,6 @@ class C_First_Order(object):
 
 		self.I_matrix, self.J_matrix = np.meshgrid(i, j)
 
-		self.N = self.subset_size * self.subset_size
-
 		self.I = self.I_matrix.flatten()
 		self.J = self.J_matrix.flatten()
 
