@@ -114,11 +114,6 @@ class Test_DIC_NR(unittest.TestCase):
 
 		#TODO: test derivative spline
 
-	def test_newton_raphson(self):
-		#TODO:
-		print()
-		
-
 	def test_whole(self):
 		dic_2 = DIC_NR()
 		dic_2.set_parameters(TEST_IMAGE_DIR + "ref50.bmp", TEST_IMAGE_DIR + "def50.bmp",11,[0,0])
@@ -127,21 +122,3 @@ class Test_DIC_NR(unittest.TestCase):
 
 		self.assertEqual(output_2[20,20,0], 2)
 		self.assertTrue(math.isclose(output_2[20,20,1], 0.0, abs_tol = 0.01))
-
-		x,y,z = output_2.shape
-		sav = np.swapaxes(output_2, 2, 1).reshape((x, y*z), order='A')
-
-		savetxt_compact("output",sav)
-
-
-def savetxt_compact(fname, x, fmt="%.6g", delimiter=','):
-	with open(f"compact_{fname}.csv", 'w+') as fh:
-		for row in x:
-			line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-			fh.write(line + '\n')
-
-def savetxt_compact_matlab(fname, x, fmt="%.6g", delimiter=','):
-	with open(f"matlab_{fname}.csv", 'w+') as fh:
-		for row in x:
-			line = delimiter.join("0" if value == 0 else fmt % value for value in row)
-			fh.write(line + '\n')
