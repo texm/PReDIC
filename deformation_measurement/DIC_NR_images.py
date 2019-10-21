@@ -11,7 +11,7 @@ class DIC_NR:
 	def __init__(self, debug=False):
 		self.debug = debug
 
-	def set_parameters(self, ref_img: str, def_img: str, subset_size: int = 11, ini_guess: list = [0, 0]):
+	def set_parameters(self, ref_img: str, def_img: str, subset_size: int = 21, ini_guess: list = [0, 0]):
 		# Initialize variables
 		self.subset_size = subset_size
 		self.spline_order = 6
