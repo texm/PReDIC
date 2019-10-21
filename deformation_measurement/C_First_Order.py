@@ -41,7 +41,7 @@ class C_First_Order(object):
 
 		self.define_deformed_subset(q, Xp, Yp)
 		
-		f = np.reshape(self.ref_image[(Yp + self.j[0]):((Yp + self.j[-1])+1), (Xp + self.i[0]):((Xp + self.i[-1])+1), 0], (1, self.N), 'F').flatten()
+		f = np.reshape(self.ref_image[(Yp + self.j)[0]:((Yp + self.j)[-1]+1), (Xp + self.i)[0]:((Xp + self.i)[-1]+1), 0], (1, self.N), 'F').flatten()
 
 		g = self.def_interp.ev(self.Y, self.X).flatten()
 
@@ -52,7 +52,6 @@ class C_First_Order(object):
 		C = np.divide(SS_f_g, SS_f_sq)
 
 		if nargout > 1:
-
 			dg_dX = self.def_interp.ev(self.Y, self.X, 0, 1).flatten()
 			dg_dY = self.def_interp.ev(self.Y, self.X, 1, 0).flatten()
 
