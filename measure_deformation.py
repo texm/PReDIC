@@ -28,16 +28,23 @@ def main():
 	parser.add_argument("-d", "--debug", dest="debug_mode", action="store_true", 
 						help="Use debug print mode.")
 
-	parser.add_argument("-o", "--output", dest="output_file", 
-						type=str, required=False,
-						help="File to write formatted csv output to")
+
+parser.add_argument("-p", "--parallel", dest="parallel_mode", action="store_true", 
+					help="Run in parallel *Please note that to run in parallel at larger image sizes will require a manual tweak of the file in your sitepackages/joblib/parallel.py line 475 change max_nbytes=1M to max_nbytes=50M or larger*")
+
+parser.add_argument("-o", "--output", dest="output_file", 
+					type=str, required=False,
+					help="File to write formatted csv output.")
+
 
 	parser.add_argument("-v", "--visualise", dest="visualise", action="store_true",
 						help="Automatically use matplotlib to visualise the output.")
 
 	args = parser.parse_args()
 
-	dic = dm.DIC_NR(args.debug_mode)
+
+dic = dm.DIC_NR(args.debug_mode, args.parallel_mode)
+
 
 	dic.set_parameters(args.ref_image, args.def_image, args.subset_size, args.ini_guess)
 	results = dic.calculate()
