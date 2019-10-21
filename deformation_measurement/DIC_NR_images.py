@@ -287,9 +287,7 @@ class DIC_NR:
 
 		calc_start_time = datetime.now()
 
-		if (self.parallel == False):
-			self.sequential_calculate(calc_start_time)
-		else:
+		if self.parallel:
 			num_cores = multiprocessing.cpu_count()
 			self.DEFORMATION_PARAMETERS = Parallel(n_jobs=num_cores, max_nbytes=None)(
 				delayed(self.parallel_calculate_helper)
@@ -297,5 +295,7 @@ class DIC_NR:
 						for i in range(self.Xmin, self.Xmax)
 						for j in range(self.Ymin,self.Ymax)
 			)
+		else:
+			self.sequential_calculate(calc_start_time)
 
 		return self.DEFORMATION_PARAMETERS
