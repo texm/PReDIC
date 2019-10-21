@@ -20,7 +20,7 @@ These parameters are the `reference image`, `deformed image`, `subset size`, and
 After that, the method `calculate` will return the results as a numpy array.
 
 For example:
-```
+```python3
 import deformation_measurement as dm
 
 dic = dm.DIC_NR()
