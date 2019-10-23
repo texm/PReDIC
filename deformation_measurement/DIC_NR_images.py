@@ -290,7 +290,7 @@ class DIC_NR:
 		if self.parallel:
 			num_cores = multiprocessing.cpu_count()
 			vb = 10 if (self.debug) else 0
-			results = Parallel(batch_size=floor(self.Xmax/num_cores),n_jobs=num_cores,max_nbytes=None,verbose=vb)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
+			results = Parallel(batch_size=floor(self.Xmax/num_cores),n_jobs=num_cores,max_nbytes=None,verbose=vb)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax + 1) for j in range(self.Ymin,self.Ymax + 1))
 			self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 			for i in range(len(results[:])):
 				self.DEFORMATION_PARAMETERS[int(results[i][7]),int(results[i][8])] = results[i]
