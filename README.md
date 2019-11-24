@@ -1,5 +1,6 @@
 # CITS3200_Group16
 Digital Image Correlation in Python 3. Using spline interpolation and Newton-Raphson method for convergence.
+All members of Group 16 give full credit to Dr Ghulam Mubashar Hassan for providing the original matlab code on which this program is based.
 
 ## Setup
 To setup & install dependencies we will create a virtual environment and install from `requirements.txt`.
