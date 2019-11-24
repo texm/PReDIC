@@ -156,7 +156,7 @@ class DIC_NR:
 		self.def_interp_y = self.def_interp(X_defcoord, Y_defcoord, 1, 0)
 
 
-	def parallel_calculate_helper(self, yy, xx, calc_start_time):
+	def parallel_calculate_helper(self, xx, yy, calc_start_time):
 		if yy > self.Ymin:
 			pass
 
@@ -289,8 +289,8 @@ class DIC_NR:
 
 		if self.parallel:
 			num_cores = multiprocessing.cpu_count()
-			
-			results = Parallel(n_jobs=num_cores,max_nbytes=None)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax) for j in range(self.Ymin,self.Ymax))
+			vb = 10 if (self.debug) else 0
+			results = Parallel(batch_size=floor(self.Xmax/num_cores),n_jobs=num_cores,max_nbytes=None,verbose=vb)(delayed(self.parallel_calculate_helper)(i, j, calc_start_time) for i in range(self.Xmin, self.Xmax + 1) for j in range(self.Ymin,self.Ymax + 1))
 			self.DEFORMATION_PARAMETERS = np.zeros((self.Y_size,self.X_size,12), dtype = float)
 			for i in range(len(results[:])):
 				self.DEFORMATION_PARAMETERS[int(results[i][7]),int(results[i][8])] = results[i]
