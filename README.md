@@ -1,6 +1,8 @@
-# CITS3200_Group16
-Digital Image Correlation in Python 3. Using spline interpolation and Newton-Raphson method for convergence.
-All members of Group 16 give full credit to Dr Ghulam Mubashar Hassan for providing the original matlab code on which this program is based.
+# PReDIC
+(**P**ython **Re**written **Digital Image Correlation**)
+
+Digital Image Correlation in Python 3. Using spline interpolation and Newton-Raphson convergence.
+All contributors give full credit to Dr Ghulam Mubashar Hassan for providing the original matlab code on which this program is based.
 
 ## Setup
 To setup & install dependencies we will create a virtual environment and install from `requirements.txt`.
@@ -12,7 +14,7 @@ to create a virtual environment, then
 to install the necessary packages into the virtual environment.
 
 ## Using in a program
-From the `deformation_measurement` package, import the class DIC_NR.
+From the `predic` package, import the class DIC_NR.
 
 In code you create it, then supply it with the parameters in `set_parameters` to calculate deformation from.
 
@@ -22,7 +24,7 @@ After that, the method `calculate` will return the results as a numpy array.
 
 For example:
 ```python3
-import deformation_measurement as dm
+import predic as dm
 
 dic = dm.DIC_NR()
 dic.set_parameters("ref_image.bmp", "def_image.bmp", 11, [0, 0])
