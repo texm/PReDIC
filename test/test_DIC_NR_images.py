@@ -5,7 +5,7 @@ sys.path.append(PARENT_DIR)
 
 TEST_IMAGE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/testing_images/"
 
-from deformation_measurement import DIC_NR
+from predic import DIC_NR
 
 import numpy as np
 from PIL import Image

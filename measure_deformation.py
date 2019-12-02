@@ -3,7 +3,7 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-import deformation_measurement as dm
+import predic as dm
 
 def main():
 	parser = argparse.ArgumentParser(description="Measure deformation between two images, given a subset size and optional initial guess.")
